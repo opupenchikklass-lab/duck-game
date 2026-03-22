@@ -1,132 +1,78 @@
-[22.03.2026 21:45] Роман: <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Duck Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --gold: #f1c40f; --bg: #0e0e0e; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; user-select: none; }
-        
-        .header { display: flex; justify-content: space-around; padding: 15px; background: #111; border-bottom: 1px solid #333; }
-        .balance { font-size: 45px; font-weight: 900; margin: 20px 0; }
-
-        .duck-card { background: #151515; width: 88%; margin: 0 auto; border-radius: 25px; padding: 25px 15px; border: 1px solid #333; }
-        .lvl-label { color: #666; font-weight: bold; font-size: 14px; margin-bottom: 10px; }
-        .duck-img { width: 170px; margin-bottom: 20px; transition: transform 0.1s; }
-        .duck-img:active { transform: scale(0.95); }
-        
-        /* ШКАЛА РОСТА (1000) */
-        .xp-box { width: 90%; margin: 0 auto 15px; }
-        .xp-bg { width: 100%; height: 12px; background: #000; border-radius: 6px; overflow: hidden; border: 1px solid #222; }
-        .xp-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.1s; }
-        .xp-info { font-size: 11px; color: #444; margin-top: 8px; text-transform: uppercase; font-weight: bold; }
-
-        .btn-feed { 
-            width: 100%; background: var(--gold); border: none; padding: 20px; 
-            border-radius: 18px; color: black; font-weight: 900; font-size: 20px; cursor: pointer;
-        }
-
-        /* ИНВЕНТАРЬ (СЕТКА 4x4) */
-        .inv-title { margin-top: 30px; font-size: 11px; color: #333; text-transform: uppercase; font-weight: bold; }
-        .grid { 
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; 
-            width: 90%; margin: 15px auto; background: #111; padding: 12px; border-radius: 20px; 
-        }
-        .slot { 
-            aspect-ratio: 1; background: #181818; border-radius: 12px; border: 1px solid #222;
-            display: flex; align-items: center; justify-content: center; font-size: 30px; 
-        }
+        body { background: #0e0e0e; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .btn { background: #f1c40f; color: black; padding: 20px; width: 100%; border-radius: 15px; font-weight: bold; border: none; font-size: 18px; margin-top: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 20px; }
+        .slot { aspect-ratio: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .bar-bg { width: 100%; height: 10px; background: #000; border-radius: 5px; margin: 10px 0; overflow: hidden; }
+        .bar-fill { height: 100%; background: #f1c40f; width: 0%; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div>🌽 КОРМ: <span id="corn-ui">1000</span></div>
-        <div style="color: var(--gold);">⭐ 15</div>
+    <h2>156.50</h2>
+    <p>🌽 КОРМ: <span id="c">1000</span></p>
+
+    <div style="background: #151515; padding: 15px; border-radius: 20px;">
+        <div class="bar-bg"><div id="f" class="bar-fill"></div></div>
+        <div style="font-size: 10px;"><span id="x">0</span> / 1000 ДО РОСТУ</div>
+        <button class="btn" onclick="tap()">ГОДУВАТИ 1</button>
     </div>
 
-    <div class="balance" id="money-ui">156.50</div>
-
-    <div class="duck-card">
-        <div class="lvl-label" id="lvl-ui">LVL 4</div>
-        <img src="https://i.ibb.co/p6V8hP5/duck.png" class="duck-img" onclick="feedAction()">
-        
-        <div class="xp-box">
-            <div class="xp-bg"><div class="xp-fill" id="xp-bar"></div></div>
-            <div class="xp-info"><span id="xp-val">0</span> / 1000 ДО РОСТУ</div>
-        </div>
-
-        <button class="btn-feed" onclick="feedAction()">ГОДУВАТИ 🌽1</button>
-    </div>
-
-    <div class="inv-title">ТВОЇ ЯЙЦЯ (ИНВЕНТАРЬ)</div>
-    <div class="grid" id="grid"></div>
+    <div class="grid" id="g"></div>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-
-        let state = {
-            corn: 1000,
-            money: 156.50,
-            xp: 0,
-            lvl: 4,
-            taps: 0,
-            slots: Array(16).fill(null)
+        // Принудительная инициализация
+        window.onload = () => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+            }
         };
 
-        function feedAction() {
-            if (state.corn <= 0) return;
+        let state = { corn: 1000, xp: 0, taps: 0, slots: Array(16).fill(null) };
 
-            // 1. Уменьшаем корм, прибавляем баланс
+        function tap() {
             state.corn--;
-            state.money += 0.02;
-            
-            // 2. Увеличиваем шкалу роста утки (до 1000)
             state.xp++;
-            if (state.xp >= 1000) {
-                state.xp = 0;
-                state.lvl++;
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            }
-[22.03.2026 21:45] Роман: // 3. Выпадение яйца КАЖДЫЕ 2 ТАПА
             state.taps++;
+
+            // Механика: 2 тапа = 1 яйцо
             if (state.taps % 2 === 0) {
-                let emptyIndex = state.slots.indexOf(null);
-                if (emptyIndex !== -1) {
-                    state.slots[emptyIndex] = '🥚';
-                }
+                let empty = state.slots.indexOf(null);
+                if (empty !== -1) state.slots[empty] = '🥚';
             }
 
-            updateUI();
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-        }
-
-        function updateUI() {
-            // Обновление текста
-            document.getElementById('corn-ui').innerText = state.corn;
-            document.getElementById('money-ui').innerText = state.money.toFixed(2);
-            document.getElementById('lvl-ui').innerText = 'LVL ' + state.lvl;
-            document.getElementById('xp-val').innerText = state.xp;
+            // Обновляем текст
+            document.getElementById('c').innerText = state.corn;
+            document.getElementById('x').innerText = state.xp;
             
-            // Обновление шкалы
-            let progress = (state.xp / 1000) * 100;
-            document.getElementById('xp-bar').style.width = progress + '%';
+            // Обновляем шкалу (1/1000)
+            document.getElementById('f').style.width = (state.xp / 10) + '%';
 
-            // Отрисовка сетки инвентаря
-            const grid = document.getElementById('grid');
+            // Обновляем сетку 4x4
+            const grid = document.getElementById('g');
             grid.innerHTML = '';
-            state.slots.forEach(item => {
-                const slot = document.createElement('div');
-                slot.className = 'slot';
-                slot.innerText = item || '';
-                grid.appendChild(slot);
+            state.slots.forEach(s => {
+                let d = document.createElement('div');
+                d.className = 'slot';
+                d.innerText = s || '';
+                grid.appendChild(d);
             });
+
+            // Вибрация
+            if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
         }
 
-        updateUI();
+        // Рисуем пустую сетку при старте
+        tap(); state.corn++; state.xp--; state.taps--; 
     </script>
 </body>
 </html>
