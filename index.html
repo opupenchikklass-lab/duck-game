@@ -1,33 +1,29 @@
-[22.03.2026 20:43] Роман: <!DOCTYPE html>
+[22.03.2026 20:47] Роман: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Merge: Legend Hunt</title>
+    <title>Duck Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #121212; color: white; font-family: 'Arial', sans-serif; text-align: center; margin: 0; user-select: none; }
-        .header { display: flex; justify-content: space-around; background: #1e1e1e; padding: 15px; border-bottom: 2px solid #ffd700; }
-        .stat { font-weight: bold; font-size: 18px; }
-        .counter { color: #aaa; font-size: 12px; margin-top: 10px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 90px); grid-gap: 12px; justify-content: center; margin-top: 20px; }
-        .slot { width: 90px; height: 90px; background: #252525; border-radius: 15px; border: 2px solid #333; display: flex; align-items: center; justify-content: center; position: relative; transition: 0.2s; }
-        .slot.selected { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
-        .lvl { position: absolute; bottom: 5px; right: 5px; background: #ffd700; color: black; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .btn-buy { background: #ffd700; color: black; border: none; padding: 16px 32px; border-radius: 12px; font-weight: bold; margin-top: 30px; cursor: pointer; font-size: 16px; }
-        #log { height: 40px; margin-top: 15px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-        .rare { color: #3498db; } .epic { color: #9b59b6; } .lega { color: #f1c40f; text-shadow: 0 0 10px gold; }
+        body { background: #1a1a1a; color: white; text-align: center; font-family: Arial, sans-serif; user-select: none; margin: 0; }
+        .header { display: flex; justify-content: space-around; padding: 20px; background: #222; border-bottom: 2px solid #ffd700; font-size: 20px; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(3, 100px); grid-gap: 15px; justify-content: center; margin-top: 40px; }
+        .slot { width: 100px; height: 100px; background: #333; border-radius: 15px; border: 2px solid #444; display: flex; align-items: center; justify-content: center; position: relative; font-size: 50px; cursor: pointer; }
+        .slot.selected { border-color: #ffd700; box-shadow: 0 0 15px #ffd700; }
+        .lvl { position: absolute; bottom: 5px; right: 5px; background: #ffd700; color: black; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .btn-buy { margin-top: 40px; padding: 20px 40px; font-size: 18px; background: #ffd700; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; color: black; }
+        #status { height: 30px; margin-top: 20px; font-weight: bold; color: #ffd700; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="stat">🌽 <span id="corn">100</span></div>
-    <div class="stat">💎 <span id="tokens">0</span></div>
+    <div>🌽 КОРМ: <span id="corn">100</span></div>
+    <div>🥚 ЯЙЦА: <span id="eggs">0</span></div>
 </div>
 
-<div class="counter">Яиц открыто в цикле: <span id="egg-count">0</span>/10</div>
-<div id="log"></div>
+<div id="status">Нажми на два яйца, чтобы получить утку!</div>
 
 <div class="grid" id="grid"></div>
 
@@ -38,61 +34,77 @@
     tg.expand();
 
     let corn = 100;
-    let tokens = 0;
-    let eggCycleCounter = 0; // Считаем яйца от 1 до 10
+    let eggsCounter = 0; // Общее число открытых яиц для шансов
     let slots = Array(9).fill(null);
-    let selectedIndex = null;
+    let selected = null;
 
     function render() {
-        const gridEl = document.getElementById('grid');
-        gridEl.innerHTML = '';
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
         slots.forEach((item, i) => {
             const div = document.createElement('div');
-            div.className = 'slot' + (selectedIndex === i ? ' selected' : '');
+            div.className = 'slot' + (selected === i ? ' selected' : '');
             div.onclick = () => handleClick(i);
+            
             if (item) {
-                div.innerHTML = <span style="font-size: 45px;">${item.type === 'egg' ? '🥚' : '🦆'}</span>;
+                div.innerHTML = item.type === 'egg' ? '🥚' : '🦆';
                 if (item.type === 'duck') {
                     div.innerHTML += <div class="lvl">${item.lvl}</div>;
                 }
             }
-            gridEl.appendChild(div);
+            grid.appendChild(div);
         });
         document.getElementById('corn').innerText = corn;
-        document.getElementById('tokens').innerText = tokens;
-        document.getElementById('egg-count').innerText = eggCycleCounter;
+        document.getElementById('eggs').innerText = eggsCounter;
     }
 
     function buyEgg() {
-        let emptyIdx = slots.findIndex(s => s === null);
-        if (corn >= 5 && emptyIdx !== -1) {
+        let idx = slots.findIndex(s => s === null);
+        if (corn >= 5 && idx !== -1) {
             corn -= 5;
-            slots[emptyIdx] = { type: 'egg', lvl: 0 };
-            tg.HapticFeedback.impactOccurred('medium');
+            slots[idx] = { type: 'egg', lvl: 0 };
             render();
+            tg.HapticFeedback.impactOccurred('medium');
         }
     }
 
     function handleClick(i) {
-        if (selectedIndex === null) {
-            if (slots[i]) selectedIndex = i;
+        if (selected === null) {
+            if (slots[i]) selected = i;
         } else {
-            let s1 = slots[selectedIndex];
+            let s1 = slots[selected];
             let s2 = slots[i];
-            
-            if (i !== selectedIndex && s1 && s2 && s1.type === s2.type && s1.lvl === s2.lvl) {
-[22.03.2026 20:43] Роман: if (s1.type === 'egg') {
-                    eggCycleCounter++; // Увеличиваем счетчик открытых яиц
-                    let log = document.getElementById('log');
-                    let resultLvl = 1;
-                    let rand = Math.random() * 100; // 0.00 - 100.00
 
-                    // ПРОВЕРКА ШАНСОВ (только с 6 по 10 яйцо)
-                    if (eggCycleCounter >= 6 && eggCycleCounter <= 10) {
-                        if (rand <= 1) { // ЛЕГА 1%
-                            resultLvl = 4;
-                            log.innerHTML = "<span class='lega'>🏆 ЛЕГЕНДАРНАЯ УТКА! 🏆</span>";
-                            tokens += 100;
-                        } else if (rand <= 4) { // ЭПИК (3%) -> 1 + 3 = 4
-                            resultLvl = 3;
-                            log
+            if (selected !== i && s1 && s2 && s1.type === s2.type && s1.lvl === s2.lvl) {
+                if (s1.type === 'egg') {
+                    eggsCounter++;
+                    let newLvl = 1;
+                    let r = Math.random() * 100;
+
+                    // Твои шансы с 6 по 10 яйцо
+                    if (eggsCounter >= 6 && eggsCounter <= 10) {
+                        if (r <= 1) newLvl = 4;      // Лега 1%
+                        else if (r <= 4) newLvl = 3; // Эпик 3%
+                        else if (r <= 24) newLvl = 2; // Редкая 20%
+[22.03.2026 20:47] Роман: }
+                    
+                    slots[i] = { type: 'duck', lvl: newLvl };
+                    if (eggsCounter >= 10) eggsCounter = 0;
+                    document.getElementById('status').innerText = "Вылупилась утка лвл " + newLvl + "!";
+                } else {
+                    // Сшивание уток
+                    slots[i].lvl += 1;
+                    document.getElementById('status').innerText = "Утка прокачана до лвл " + slots[i].lvl + "!";
+                }
+                slots[selected] = null;
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+            selected = null;
+        }
+        render();
+    }
+
+    render();
+</script>
+</body>
+</html>
