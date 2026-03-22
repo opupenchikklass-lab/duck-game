@@ -1,47 +1,130 @@
-<!DOCTYPE html>
+[22.03.2026 18:30] ❤️: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Game Fix</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?5"></script>
+    <title>Duck Merge Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #0a0e17; color: #fff; text-align: center; font-family: sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .stats { font-size: 24px; margin-bottom: 20px; background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 20px; }
-        #duck-clicker { width: 250px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.05s; }
-        #duck-clicker:active { transform: scale(0.95); }
-        .nav { margin-top: 30px; display: flex; gap: 20px; }
-        button { background: orange; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        body { background: #0a0e17; color: white; margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .header { display: flex; justify-content: space-around; padding: 15px; background: #161b22; border-bottom: 2px solid #333; }
+        #screen-farm, #screen-inv { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+        
+        /* ГЛАВНАЯ УТКА */
+        .duck-box { width: 260px; height: 260px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        #duck-img { width: 100%; border-radius: 25px; transition: transform 0.05s; }
+        .duck-box:active #duck-img { transform: scale(0.94); }
+
+        /* ИНВЕНТАРЬ (СЕТКА) */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px; width: 95%; box-sizing: border-box; }
+        .slot { 
+            aspect-ratio: 1/1; background: #1c2128; border: 2px solid #30363d; 
+            border-radius: 12px; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; font-size: 26px; position: relative;
+        }
+        .slot.selected { border-color: orange; background: rgba(255, 165, 0, 0.1); }
+        .lvl-badge { position: absolute; top: 2px; right: 5px; font-size: 10px; color: orange; font-weight: bold; }
+        .open-btn { background: orange; border: none; border-radius: 5px; font-size: 9px; font-weight: bold; margin-top: 5px; padding: 3px 6px; color: black; }
+
+        .footer { display: flex; background: #0f131a; border-top: 1px solid #333; padding-bottom: 25px; }
+        .nav { flex: 1; padding: 15px; text-align: center; opacity: 0.4; font-weight: bold; cursor: pointer; }
+        .nav.active { opacity: 1; color: orange; border-top: 2px solid orange; }
     </style>
 </head>
 <body>
 
-    <div class="stats">🌽 <span id="corn-count">100</span></div>
-    
-    <div onclick="doTap()">
-        <img id="duck-clicker" src="duck-dapper.png" alt="Duck">
+    <div class="header">
+        <div>🌽 <span id="u-corn">100</span></div>
+        <div>🥚 <span id="u-eggs">0</span></div>
     </div>
 
-    <div class="nav">
-        <button onclick="alert('Скоро: Инвентарь и Слияние!')">ЯЙЦЯ</button>
+    <div id="screen-farm">
+        <div style="color: orange; margin-bottom: 10px; font-weight: bold;">LEVEL <span id="u-lvl">1</span></div>
+        <div class="duck-box" onclick="tapDuck()">
+            <img id="duck-img" src="duck-dapper.png">
+        </div>
+        <p style="color: #666; margin-top: 15px;">Жми на джентльмена!</p>
+    </div>
+
+    <div id="screen-inv" style="display:none">
+        <p style="font-size: 12px; color: #888;">Жми на одинаковые яйца, чтобы соединить!</p>
+        <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="footer">
+        <div id="n-f" class="nav active" onclick="tab('farm')">УТКА</div>
+        <div id="n-i" class="nav" onclick="tab('inv')">ЯЙЦЯ</div>
     </div>
 
     <script>
-        // Инициализация Telegram
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем на весь экран
+        let corn = 100, fed = 0, lvl = 1, inv = [];
+        let sel = null;
 
-        let count = 100;
-        
-        function doTap() {
-            count--; // Уменьшаем корм
-            document.getElementById('corn-count').innerText = count;
-            
-            // Вибрация (Haptic Feedback)
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
+        const skins = ['🥚', '✨', '💎', '🏺', '👑', '🔥', '🌈', '🌙', '☀️', '💠'];
+        const prizes = [5, 20, 50, 150, 400, 1000, 3000, 8000, 20000, 50000];
+
+        function tapDuck() {
+            if (corn <= 0) { tg.showAlert("Корм кончился! Открывай яйца."); return; }
+            corn--; fed++;
+            if (fed >= (lvl * 1000)) { lvl++; tg.HapticFeedback.notificationOccurred('success'); }
+            if (inv.length < 16) {
+                inv.push(0);
+                if (lvl === 1 && inv.length < 16) inv.push(0);
+            }
+            update();
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function tab(t) {
+[22.03.2026 18:30] ❤️: document.getElementById('screen-farm').style.display = t === 'farm' ? 'flex' : 'none';
+            document.getElementById('screen-inv').style.display = t === 'inv' ? 'flex' : 'none';
+            document.getElementById('n-f').classList.toggle('active', t === 'farm');
+            document.getElementById('n-i').classList.toggle('active', t === 'inv');
+            if (t === 'inv') draw();
+        }
+
+        function draw() {
+            const g = document.getElementById('grid'); g.innerHTML = '';
+            for (let i = 0; i < 16; i++) {
+                const s = document.createElement('div');
+                s.className = 'slot' + (sel === i ? ' selected' : '');
+                if (inv[i] !== undefined) {
+                    s.innerHTML = <span class="lvl-badge">${inv[i]+1}</span>
+                                   <span>${skins[inv[i]]}</span>
+                                   <button class="open-btn" onclick="openE(event,${i})">OPEN</button>;
+                    s.onclick = () => select(i);
+                }
+                g.appendChild(s);
             }
         }
+
+        function select(i) {
+            if (sel === null) { sel = i; }
+            else if (sel === i) { sel = null; }
+            else {
+                if (inv[sel] === inv[i] && inv[i] < 9) {
+                    inv[i]++; inv.splice(sel, 1); sel = null;
+                    tg.HapticFeedback.notificationOccurred('success');
+                } else { sel = i; }
+            }
+            draw();
+        }
+
+        function openE(e, i) {
+            e.stopPropagation();
+            let win = prizes[inv[i]];
+            if (Math.random() < 0.05) { win *= 5; tg.showAlert("🔥 ДЖЕКПОТ: " + win + " 🌽!"); }
+            corn += win; inv.splice(i, 1); sel = null;
+            update(); draw();
+        }
+
+        function update() {
+            document.getElementById('u-corn').innerText = corn;
+            document.getElementById('u-eggs').innerText = inv.length;
+            document.getElementById('u-lvl').innerText = lvl;
+        }
+        update();
     </script>
 </body>
 </html>
