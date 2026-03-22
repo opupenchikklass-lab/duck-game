@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[22.03.2026 20:54] Роман: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -6,35 +6,21 @@
     <title>Duck Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #1a1a1a; color: white; text-align: center; font-family: Arial, sans-serif; user-select: none; margin: 0; padding-bottom: 50px; }
+        body { background: #1a1a1a; color: white; text-align: center; font-family: Arial; margin: 0; padding: 0; user-select: none; }
         .header { display: flex; justify-content: space-around; padding: 20px; background: #222; border-bottom: 2px solid #ffd700; font-size: 20px; font-weight: bold; }
         
-        /* Сетка слотов - теперь с принудительным отображением */
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            grid-gap: 10px; 
-            max-width: 320px; 
-            margin: 30px auto; 
-            padding: 10px;
-        }
+        /* СЕТКА СЛОТОВ - теперь она будет видна сразу */
+        .grid { display: grid; grid-template-columns: repeat(3, 90px); grid-gap: 15px; justify-content: center; margin-top: 30px; }
         .slot { 
-            aspect-ratio: 1 / 1; 
-            background: #333; 
-            border-radius: 12px; 
-            border: 2px solid #444; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 40px; 
-            position: relative;
-            min-height: 90px; /* Чтобы не схлопывались */
+            width: 90px; height: 90px; background: #2a2a2a; border-radius: 12px; 
+            border: 2px solid #444; display: flex; align-items: center; justify-content: center; 
+            font-size: 40px; cursor: pointer; position: relative;
         }
         .slot.selected { border-color: #ffd700; box-shadow: 0 0 10px #ffd700; }
         .lvl { position: absolute; bottom: 5px; right: 5px; background: #ffd700; color: black; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-        
-        .btn-buy { background: #ffd700; color: black; border: none; padding: 20px 40px; border-radius: 15px; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 20px; }
-        #status { color: #ffd700; margin: 15px; font-weight: bold; min-height: 20px; }
+
+        .btn-buy { margin-top: 30px; padding: 15px 30px; font-size: 18px; background: #ffd700; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: black; }
+        #status { margin-top: 15px; color: #ffd700; font-size: 14px; min-height: 20px; }
     </style>
 </head>
 <body>
@@ -44,10 +30,19 @@
     <div>🥚 ЯЙЦА: <span id="eggs">0</span></div>
 </div>
 
-<div id="status">Нажми "Купить яйцо", чтобы заполнить слоты!</div>
+<div id="status">Нажми "Купить яйцо"</div>
 
-<div class="grid" id="grid">
-    </div>
+<div class="grid">
+    <div class="slot" id="s0" onclick="handClick(0)"></div>
+    <div class="slot" id="s1" onclick="handClick(1)"></div>
+    <div class="slot" id="s2" onclick="handClick(2)"></div>
+    <div class="slot" id="s3" onclick="handClick(3)"></div>
+    <div class="slot" id="s4" onclick="handClick(4)"></div>
+    <div class="slot" id="s5" onclick="handClick(5)"></div>
+    <div class="slot" id="s6" onclick="handClick(6)"></div>
+    <div class="slot" id="s7" onclick="handClick(7)"></div>
+    <div class="slot" id="s8" onclick="handClick(8)"></div>
+</div>
 
 <button class="btn-buy" onclick="buyEgg()">КУПИТЬ ЯЙЦО (5 🌽)</button>
 
@@ -56,28 +51,26 @@
     tg.expand();
 
     let corn = 100;
-    let eggsCounter = 0; 
+    let eggsTotal = 0;
+    let openCounter = 0; 
     let slots = Array(9).fill(null);
-    let selected = null;
+    let selectedIdx = null;
 
-    function render() {
-        const grid = document.getElementById('grid');
-        grid.innerHTML = '';
-        slots.forEach((item, i) => {
-            const div = document.createElement('div');
-            div.className = 'slot' + (selected === i ? ' selected' : '');
-            div.onclick = () => handleClick(i);
-            
-            if (item) {
-                div.innerHTML = item.type === 'egg' ? '🥚' : '🦆';
-                if (item.type === 'duck') {
-                    div.innerHTML += <div class="lvl">${item.lvl}</div>;
+    function updateUI() {
+        for (let i = 0; i < 9; i++) {
+            let el = document.getElementById('s' + i);
+            el.className = 'slot' + (selectedIdx === i ? ' selected' : '');
+            if (slots[i]) {
+                el.innerText = slots[i].type === 'egg' ? '🥚' : '🦆';
+                if (slots[i].type === 'duck') {
+                    el.innerHTML += <div class="lvl">${slots[i].lvl}</div>;
                 }
+            } else {
+                el.innerText = '';
             }
-            grid.appendChild(div);
-        });
+        }
         document.getElementById('corn').innerText = corn;
-        document.getElementById('eggs').innerText = eggsCounter;
+        document.getElementById('eggs').innerText = eggsTotal;
     }
 
     function buyEgg() {
@@ -85,20 +78,39 @@
         if (corn >= 5 && idx !== -1) {
             corn -= 5;
             slots[idx] = { type: 'egg', lvl: 0 };
-            render();
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            updateUI();
+            tg.HapticFeedback.impactOccurred('medium');
         }
     }
 
-    function handleClick(i) {
-        if (selected === null) {
-            if (slots[i]) selected = i;
+    function handClick(i) {
+        if (selectedIdx === null) {
+            if (slots[i]) selectedIdx = i;
         } else {
-            let s1 = slots[selected];
+            let s1 = slots[selectedIdx];
             let s2 = slots[i];
-
-            if (selected !== i && s1 && s2 && s1.type === s2.type && s1.lvl === s2.lvl) {
+[22.03.2026 20:54] Роман: if (selectedIdx !== i && s1 && s2 && s1.type === s2.type && s1.lvl === s2.lvl) {
                 if (s1.type === 'egg') {
-                    eggsCounter++;
-                    let newLvl = 1;
-                    let r = Math.random() * 10
+                    openCounter++;
+                    let nl = 1;
+                    let r = Math.random() * 100;
+                    if (openCounter >= 6 && openCounter <= 10) {
+                        if (r <= 1) nl = 4;      // 1% Лега
+                        else if (r <= 4) nl = 3; // 3% Эпик
+                        else if (r <= 24) nl = 2;// 20% Редкая
+                    }
+                    slots[i] = { type: 'duck', lvl: nl };
+                    if (openCounter >= 10) openCounter = 0;
+                } else {
+                    slots[i].lvl += 1;
+                }
+                slots[selectedIdx] = null;
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+            selectedIdx = null;
+        }
+        updateUI();
+    }
+</script>
+</body>
+</html>
