@@ -86,27 +86,43 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
+       const tg = window.Telegram.WebApp;
         tg.expand();
 
         let score = 0;
         const duck = document.getElementById('duck');
         const scoreDisplay = document.getElementById('score');
 
-        duck.addEventListener('touchstart', (e) => {
-            e.preventDefault();
+        // Функция для обработки клика/касания
+        function handleInteraction(e) {
             score++;
             scoreDisplay.innerText = score;
 
+            // Вибрация в Telegram
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-[22.03.2026 16:34] ❤️: const text = document.createElement('div');
+
+            // Анимация текста +1
+            const text = document.createElement('div');
             text.innerText = '+1';
             text.className = 'tap-text';
-            text.style.left = e.touches[0].clientX + 'px';
-            text.style.top = (e.touches[0].clientY - 50) + 'px';
+            
+            // Определяем координаты для отображения текста
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            text.style.left = (x - 20) + 'px';
+            text.style.top = (y - 50) + 'px';
             document.body.appendChild(text);
+            
             setTimeout(() => text.remove(), 600);
-        });
+        }
+
+        // Слушаем и клик мышки, и касание экрана
+        duck.addEventListener('mousedown', handleInteraction);
+        duck.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Чтобы страница не дергалась
+            handleInteraction(e);
+        }, {passive: false});
     </script>
 </body>
 </html>
