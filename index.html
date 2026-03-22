@@ -11,3 +11,71 @@
         .stat-box { background: #2a2a2a; padding: 10px 15px; border-radius: 12px; border: 1px solid #444; min-width: 100px; }
         .duck-container { margin-top: 30px; cursor: pointer; transition: transform 0.1s; display: inline-block; }
         .duck-container:active { transform: scale(0.95); }
+        .duck-img { width: 280px; border-radius: 20px; box-shadow: 0 0 25px rgba(255, 215, 0, 0.2); }
+        .hint { margin-top: 25px; font-size: 16px; color: #ffd700; height: 24px; }
+        .level { color: #aaa; margin-bottom: 5px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="stats-container">
+        <div class="stat-box">🌽 Корм: <span id="corn">100</span></div>
+        <div class="stat-box">🥚 Яйца: <span id="eggs">0</span></div>
+    </div>
+
+    <div class="level">LEVEL 1</div>
+    <div class="duck-container" onclick="handleGameClick()">
+        <img src="duck-dapper.png" class="duck-img">
+    </div>
+
+    <div class="hint" id="hint">Нажми, чтобы покормить! 🌽</div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let corn = 100; 
+        let eggs = 0;   
+        let step = 0; // 0 - кормим, 1 - ждем яйцо
+
+        const cornEl = document.getElementById('corn');
+        const eggsEl = document.getElementById('eggs');
+        const hintEl = document.getElementById('hint');
+
+        function handleGameClick() {
+            // ШАГ 1: КОРМИМ (1-й клик)
+            if (step === 0) {
+                if (corn > 0) {
+                    corn -= 1;
+                    cornEl.innerText = corn;
+                    hintEl.innerText = "Утка ест... Жми еще раз! 🥚";
+                    hintEl.style.color = "#ffd700";
+                    step = 1; 
+                    
+                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                } else {
+                    hintEl.innerText = "Корм закончился! 😱";
+                    hintEl.style.color = "red";
+                }
+            } 
+            // ШАГ 2: ПОЛУЧАЕМ ЯЙЦО (2-й клик)
+            else if (step === 1) {
+                eggs += 1;
+                eggsEl.innerText = eggs;
+                hintEl.innerText = "Яйцо получено! Давай еще 🌽";
+                hintEl.style.color = "#4caf50";
+                step = 0; 
+                
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+                // Передаем данные боту для сохранения
+                tg.sendData(JSON.stringify({
+                    action: 'update',
+                    corn: corn,
+                    eggs: eggs
+                }));
+            }
+        }
+    </script>
+</body>
+</html>
