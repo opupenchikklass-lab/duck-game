@@ -1,126 +1,111 @@
-<!DOCTYPE html>
+[22.03.2026 16:34] ❤️: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Clicker</title>
+    <title>Duck Bankai</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-       
+        body { 
+            background: radial-gradient(circle at 50% 120%, #1a1a2e 0%, #0a0e17 100%); 
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+            height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: #fff;
+        }
+
+        /* ВЕРХНЯЯ ПАНЕЛЬ */
+        .header {
+            width: 90%; display: flex; justify-content: space-between; align-items: center; padding-top: 20px;
+        }
+        .stat-item { background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 20px; font-size: 14px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); }
+
+        /* СЧЕТ */
+        #score-container { text-align: center; margin-top: 20px; }
+        #score { font-size: 64px; font-weight: 900; letter-spacing: -2px; text-shadow: 0 0 20px rgba(255,165,0,0.3); }
+
+        /* ЦЕНТР (УТКА) */
+        #duck-container { position: relative; }
+        #duck-container::before {
+            content: ''; position: absolute; top: -10%; left: -5%; right: -5%; bottom: -10%;
+            border: 1px solid rgba(46, 125, 50, 0.5); border-radius: 20px; pointer-events: none;
+        }
+        #duck { width: 220px; cursor: pointer; transition: transform 0.05s; -webkit-tap-highlight-color: transparent; }
+        #duck:active { transform: scale(0.9); }
+
+        /* НИЖНЯЯ ПАНЕЛЬ */
+        .footer {
+            width: 100%; background: rgba(15, 15, 25, 0.95); display: flex; justify-content: space-around; 
+            padding: 15px 0 30px 0; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; opacity: 0.6; font-size: 10px; text-transform: uppercase; font-weight: bold; }
+        .nav-item.active { opacity: 1; color: #ffa500; }
+        .nav-icon { font-size: 20px; }
+
+        /* ЭФФЕКТ КЛИКА */
+        .tap-text {
+            position: absolute; color: #fff; font-weight: 900; font-size: 32px;
+            pointer-events: none; animation: floatUp 0.6s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-100px); }
+        }
     </style>
-      /* 1. Общий фон: Мрачный, темно-фиолетовый/чёрный градиент */
-    body { 
-        background: radial-gradient(circle at 50% 120%, #1a1a2e 0%, #0a0e17 100%); 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        justify-content: flex-start; /* Начинаем контент сверху, как на скрине */
-        height: 100vh; 
-        margin: 0; 
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-        overflow: hidden; 
-        user-select: none;
-        color: #fff;
-        padding-top: 60px; /* Отступ сверху для заголовка */
-    }
-
-    /* 2. Шрифт счета: Огромный, белый, неоновый */
-    #score { 
-        font-size: 80px; 
-        font-weight: 900; 
-        color: #fff; 
-        text-shadow: 0 0 10px rgba(255,255,255,0.4), 0 0 30px rgba(255, 111, 0, 0.3);
-        margin-bottom: 20px;
-        z-index: 10;
-        letter-spacing: -2px; /* Более сжатые цифры */
-    }
-
-    /* 3. Контейнер для утки: Рамка, как на скрине */
-    #duck-container {
-        position: relative;
-        perspective: 1000px;
-        z-index: 5;
-    }
-
-    /* 4. Рамка (Псевдоэлемент): Тонкая, темно-зеленая */
-    #duck-container::before {
-        content: '';
-        position: absolute;
-        top: -20px;
-        left: -15px;
-        right: -15px;
-        bottom: -20px;
-        border: 2px solid rgba(46, 125, 50, 0.4); /* Тускло-зеленый */
-        border-radius: 12px;
-        pointer-events: none;
-        z-index: -1;
-    }
-
-    /* 5. Утка: Твой эмодзи, но крупнее и с тенью */
-    #duck { 
-        width: 260px; 
-        filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
-        cursor: pointer; 
-        transition: transform 0.05s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    #duck:active { 
-        transform: scale(0.85); 
-    }
-
-    /* 6. Летающий текст +1: Белый, сочный */
-    .tap-text {
-        position: absolute;
-        color: #fff;
-        font-weight: 900;
-        font-size: 36px;
-        text-shadow: 0 0 10px rgba(255,255,255,0.5), 2px 2px 0px #e65100;
-        pointer-events: none;
-        animation: floatUp 0.6s ease-out forwards;
-        z-index: 100;
-    }
-
-    @keyframes floatUp {
-        0% { opacity: 1; transform: translateY(0) scale(1); }
-        100% { opacity: 0; transform: translateY(-160px) scale(1.4); }
-    }
 </head>
 <body>
-    <div id="score">0</div>
+
+    <div class="header">
+        <div class="stat-item">🔥 ЗГРАЯ</div>
+        <div class="stat-item">💎 177.2K</div>
+    </div>
+
+    <div id="score-container">
+        <div id="score">0</div>
+    </div>
+
     <div id="duck-container">
-        <img id="duck" src="https://img.icons8.com/emoji/256/duck-emoji.png" alt="Duck">
+        <img id="duck" src="https://img.icons8.com/emoji/256/duck-emoji.png">
+    </div>
+
+    <div style="font-size: 14px; font-weight: bold; background: #fff; color: #000; padding: 5px 15px; border-radius: 10px;">
+        ТОРКНИСЬ І ГОДУЙ 🦆
+    </div>
+
+    <div class="footer">
+        <div class="nav-item">
+            <span class="nav-icon">📈</span>
+            <span>Ринок</span>
+        </div>
+        <div class="nav-item active">
+            <span class="nav-icon">🦆</span>
+            <span>Качки</span>
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span>Друзі</span>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.headerColor = '#ffeb3b';
 
         let score = 0;
         const duck = document.getElementById('duck');
         const scoreDisplay = document.getElementById('score');
-        const container = document.getElementById('duck-container');
 
         duck.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Чтобы не было лишних зумов
+            e.preventDefault();
             score++;
             scoreDisplay.innerText = score;
 
-            // Вибрация
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-
-            // Вылетающий текст +1
-            const text = document.createElement('div');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+[22.03.2026 16:34] ❤️: const text = document.createElement('div');
             text.innerText = '+1';
             text.className = 'tap-text';
-            text.style.left = (e.touches[0].clientX - 20) + 'px';
-            text.style.top = '-50px';
-            container.appendChild(text);
-            
-            setTimeout(() => text.remove(), 500);
+            text.style.left = e.touches[0].clientX + 'px';
+            text.style.top = (e.touches[0].clientY - 50) + 'px';
+            document.body.appendChild(text);
+            setTimeout(() => text.remove(), 600);
         });
     </script>
 </body>
