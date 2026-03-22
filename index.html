@@ -1,9 +1,9 @@
-[22.03.2026 16:34] ❤️: <!DOCTYPE html>
+[22.03.2026 16:46] ❤️: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Bankai</title>
+    <title>Duck Farm</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { 
@@ -12,117 +12,109 @@
             height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: #fff;
         }
 
-        /* ВЕРХНЯЯ ПАНЕЛЬ */
-        .header {
-            width: 90%; display: flex; justify-content: space-between; align-items: center; padding-top: 20px;
-        }
+        .header { width: 90%; display: flex; justify-content: space-between; align-items: center; padding-top: 20px; }
         .stat-item { background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 20px; font-size: 14px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); }
 
-        /* СЧЕТ */
-        #score-container { text-align: center; margin-top: 20px; }
-        #score { font-size: 64px; font-weight: 900; letter-spacing: -2px; text-shadow: 0 0 20px rgba(255,165,0,0.3); }
+        /* СЧЕТЧИК ЯИЦ */
+        #eggs-container { text-align: center; margin-top: 10px; }
+        #eggs-count { font-size: 48px; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
 
-        /* ЦЕНТР (УТКА) */
+        #level-container { width: 85vw; text-align: center; }
+        #level-text { font-size: 18px; font-weight: bold; color: #ffa500; margin-bottom: 5px; }
+
+        .progress-container { background: rgba(255,255,255,0.1); height: 20px; border-radius: 10px; border: 1px solid #2e7d32; position: relative; overflow: hidden; }
+        #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #4caf50, #8bc34a); transition: width 0.2s; }
+
         #duck-container { position: relative; }
-        #duck-container::before {
-            content: ''; position: absolute; top: -10%; left: -5%; right: -5%; bottom: -10%;
-            border: 1px solid rgba(46, 125, 50, 0.5); border-radius: 20px; pointer-events: none;
-        }
-        #duck { width: 220px; cursor: pointer; transition: transform 0.05s; -webkit-tap-highlight-color: transparent; }
-        #duck:active { transform: scale(0.9); }
+        #duck { width: 250px; border-radius: 20px; cursor: pointer; transition: transform 0.05s; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
+        #duck:active { transform: scale(0.95); }
 
-        /* НИЖНЯЯ ПАНЕЛЬ */
-        .footer {
-            width: 100%; background: rgba(15, 15, 25, 0.95); display: flex; justify-content: space-around; 
-            padding: 15px 0 30px 0; border-top: 1px solid rgba(255,255,255,0.1);
+        /* АНИМАЦИЯ ЯЙЦА */
+        .egg-particle {
+            position: absolute; font-size: 30px; pointer-events: none;
+            animation: spawn 0.6s ease-out forwards; z-index: 10;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; opacity: 0.6; font-size: 10px; text-transform: uppercase; font-weight: bold; }
+        @keyframes spawn {
+            0% { opacity: 0; transform: translateY(0) scale(0.5); }
+            50% { opacity: 1; transform: translateY(-50px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-100px) scale(1); }
+        }
+
+        .footer { width: 100%; background: rgba(15, 15, 25, 0.95); display: flex; justify-content: space-around; padding: 15px 0 30px 0; border-top: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; opacity: 0.6; font-size: 10px; font-weight: bold; }
         .nav-item.active { opacity: 1; color: #ffa500; }
-        .nav-icon { font-size: 20px; }
-
-        /* ЭФФЕКТ КЛИКА */
-        .tap-text {
-            position: absolute; color: #fff; font-weight: 900; font-size: 32px;
-            pointer-events: none; animation: floatUp 0.6s ease-out forwards;
-        }
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-100px); }
-        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="stat-item">🔥 ЗГРАЯ</div>
-        <div class="stat-item">💎 177.2K</div>
+        <div class="stat-item">🥚 <span id="total-eggs">0</span></div>
+        <div class="stat-item">🌽 <span id="corn-balance">100</span></div>
     </div>
 
-    <div id="score-container">
-        <div id="score">0</div>
+    <div id="eggs-container">
+        <div style="font-size: 12px; color: #aaa; letter-spacing: 2px;">collected</div>
+        <div id="eggs-count">0</div>
+    </div>
+
+    <div id="level-container">
+        <div id="level-text">LEVEL <span id="lvl-num">1</span> / 7</div>
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
     </div>
 
     <div id="duck-container">
-        <img id="duck" src="https://img.icons8.com/emoji/256/duck-emoji.png">
+        <img id="duck" src="duck-dapper.png">
     </div>
 
-    <div style="font-size: 14px; font-weight: bold; background: #fff; color: #000; padding: 5px 15px; border-radius: 10px;">
-        ТОРКНИСЬ І ГОДУЙ 🦆
+    <div style="font-size: 14px; font-weight: bold; background: #fff; color: #000; padding: 8px 20px; border-radius: 20px;">
+        TAP TO FEED (-1 🌽)
     </div>
 
     <div class="footer">
-        <div class="nav-item">
-            <span class="nav-icon">📈</span>
-            <span>Ринок</span>
-        </div>
-        <div class="nav-item active">
-            <span class="nav-icon">🦆</span>
-            <span>Качки</span>
-        </div>
-        <div class="nav-item">
-            <span class="nav-icon">👥</span>
-            <span>Друзі</span>
-        </div>
+        <div class="nav-item">📈<span>Ринок</span></div>
+        <div class="nav-item active">🦆<span>Качки</span></div>
+        <div class="nav-item">👥<span>Друзі</span></div>
     </div>
 
     <script>
-       const tg = window.Telegram.WebApp;
+        const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let score = 0;
-        const duck = document.getElementById('duck');
-        const scoreDisplay = document.getElementById('score');
+        let corn = 100; // Стартовый запас корма
+        let eggs = 0;   // Собранные яйца
+        let fullness = 0;
+        let level = 1;
+        const maxLevel = 7;
+[22.03.2026 16:46] ❤️: const duck = document.getElementById('duck');
+        const progressBar = document.getElementById('progress-bar');
+        const cornDisplay = document.getElementById('corn-balance');
+        const eggsDisplay = document.getElementById('eggs-count');
+        const totalEggsDisplay = document.getElementById('total-eggs');
+        const lvlDisplay = document.getElementById('lvl-num');
 
-        // Функция для обработки клика/касания
-        function handleInteraction(e) {
-            score++;
-            scoreDisplay.innerText = score;
+        function tap(e) {
+            if (corn <= 0) {
+                tg.showAlert("Упс! Корм закончился 🌽");
+                return;
+            }
 
-            // Вибрация в Telegram
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            if (level > maxLevel) return;
 
-            // Анимация текста +1
-            const text = document.createElement('div');
-            text.innerText = '+1';
-            text.className = 'tap-text';
-            
-            // Определяем координаты для отображения текста
-            const x = e.clientX || (e.touches && e.touches[0].clientX);
-            const y = e.clientY || (e.touches && e.touches[0].clientY);
-            
-            text.style.left = (x - 20) + 'px';
-            text.style.top = (y - 50) + 'px';
-            document.body.appendChild(text);
-            
-            setTimeout(() => text.remove(), 600);
+            // Логика тапа
+            corn -= 1;     // Тратим корм
+            eggs += 1;     // Получаем яйцо
+            fullness += 4; // Прогресс уровня (25 тапов до нового LVL)
+
+            if (fullness >= 100 && level < maxLevel) {
+                levelUp();
+            }
+
+            updateUI();
+            showEggAnimation(e);
+
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
-        // Слушаем и клик мышки, и касание экрана
-        duck.addEventListener('mousedown', handleInteraction);
-        duck.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Чтобы страница не дергалась
-            handleInteraction(e);
-        }, {passive: false});
-    </script>
-</body>
-</html>
+        function levelUp() {
