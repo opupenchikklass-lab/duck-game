@@ -1,126 +1,91 @@
-[22.03.2026 17:41] ❤️: <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Jackpot Pro</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Duck Game</title>
     <style>
-        body { background: #0a0e17; color: #fff; margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; align-items: center; }
-        .header { display: flex; justify-content: space-around; width: 100%; padding: 15px 0; background: rgba(0,0,0,0.5); border-bottom: 1px solid #222; }
-        .stat-item { background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 20px; border: 1px solid #333; min-width: 80px; text-align: center; }
-        
-        #screen-farm, #screen-merge { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
-        
-        .lvl-box { width: 85%; text-align: center; margin-bottom: 20px; }
-        .bar-bg { background: #222; height: 12px; border-radius: 6px; border: 1px solid #444; overflow: hidden; margin-top: 5px; }
-        #bar-fill { width: 0%; height: 100%; background: #ffa500; transition: width 0.3s; }
-
-        /* НАДЕЖНАЯ КНОПКА-УТКА */
-        .duck-area { 
-            width: 280px; height: 280px; 
-            cursor: pointer; position: relative;
-            display: flex; align-items: center; justify-content: center;
-            -webkit-tap-highlight-color: transparent;
+        body { background: #0a0e17; color: white; margin: 0; font-family: sans-serif; text-align: center; }
+        .stats { display: flex; justify-content: space-around; padding: 20px; background: #161b22; }
+        #duck-btn { 
+            font-size: 100px; margin-top: 50px; cursor: pointer; 
+            user-select: none; transition: transform 0.1s;
+            display: inline-block;
         }
-        #duck-img { width: 100%; border-radius: 20px; transition: transform 0.05s; pointer-events: none; }
-        .duck-area:active #duck-img { transform: scale(0.92); }
-
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 90%; margin-top: 20px; }
-        .slot { aspect-ratio: 1/1; background: #161b22; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 24px; position: relative; }
-        .open-btn { background: #ffa500; color: #000; font-size: 10px; font-weight: bold; padding: 4px 8px; border-radius: 5px; margin-top: 5px; }
-
-        .footer { display: flex; justify-content: space-around; width: 100%; padding: 15px 0 35px; background: #0f131a; border-top: 1px solid #222; }
-        .nav-item { opacity: 0.4; text-align: center; font-size: 11px; cursor: pointer; }
-        .nav-item.active { opacity: 1; color: #ffa500; font-weight: bold; }
+        #duck-btn:active { transform: scale(0.9); }
+        .lvl-info { margin-top: 20px; color: orange; font-weight: bold; }
+        #inventory { display: none; padding: 20px; }
+        .footer { position: fixed; bottom: 0; width: 100%; display: flex; background: #0f131a; }
+        .nav { flex: 1; padding: 15px; cursor: pointer; opacity: 0.5; }
+        .nav.active { opacity: 1; color: orange; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="stat-item">🌽 <span id="ui-corn">100</span></div>
-        <div class="stat-item">🥚 <span id="ui-eggs">0</span></div>
+    <div class="stats">
+        <div>🌽 <span id="corn">100</span></div>
+        <div>🥚 <span id="eggs">0</span></div>
     </div>
 
-    <div id="screen-farm">
-        <div class="lvl-box">
-            <b style="color:#ffa500">LEVEL <span id="ui-lvl">1</span></b>
-            <div style="font-size:12px; color:#888"><span id="ui-fed">0</span> / <span id="ui-next">1000</span></div>
-            <div class="bar-bg"><div id="bar-fill"></div></div>
-        </div>
-        
-        <div class="duck-area" id="main-tap">
-            <img id="duck-img" src="duck-dapper.png">
-        </div>
+    <div id="farm">
+        <div class="lvl-info">LEVEL <span id="lvl">1</span> (<span id="fed">0</span>/1000)</div>
+        <div id="duck-btn">🦆</div>
+        <p>Нажимай на утку!</p>
     </div>
 
-    <div id="screen-merge" style="display:none">
-        <h3 style="color:#ffa500">ЯЙЦЯ (ИНВЕНТАРЬ)</h3>
-        <div class="grid" id="grid"></div>
+    <div id="inventory">
+        <h3>ТВОИ ЯЙЦА</h3>
+        <div id="items"></div>
     </div>
 
     <div class="footer">
-        <div class="nav-item active" id="f-btn" onclick="go('farm')">🦆<br>КАЧКИ</div>
-        <div class="nav-item" id="m-btn" onclick="go('merge')">🥚<br>ЯЙЦЯ</div>
+        <div id="f-tab" class="nav active" onclick="tab('farm')">УТКА</div>
+        <div id="i-tab" class="nav" onclick="tab('inv')">ЯЙЦА</div>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        let corn = 100, fed = 0, lvl = 1, inv = [];
+        let corn = 100, fed = 0, lvl = 1, eggs = [];
+        const levels = [0, 1000, 2500, 4000, 8000, 20000, 30000];
 
-        const lvls = [0, 1000, 2500, 4000, 8000, 20000, 30000];
-        const skins = ['🥚', '✨', '💎', '🏺', '👑', '🔥', '🌈', '🌙', '☀️', '💠'];
-        const rew = [5, 15, 40, 100, 250, 600, 1500, 4000, 10000, 25000];
-        const jacks = [250, 750, 1250, 2500, 3000, 5000, 15000, 20000, 30000, 50000];
-[22.03.2026 17:41] ❤️: // КЛИК ПО УТКЕ
-        document.getElementById('main-tap').onclick = function() {
-            if (corn <= 0) { tg.showAlert("Корм кончился! Жми 'OPEN' на яйцах."); return; }
+        document.getElementById('duck-btn').onclick = function() {
+            if (corn <= 0) { alert("Нет корма!"); return; }
             corn--; fed++;
-            if (lvl < 7 && fed >= lvls[lvl]) { lvl++; tg.HapticFeedback.notificationOccurred('success'); }
-            if (inv.length < 16) { 
-                inv.push(0); 
-                if (lvl === 1 && inv.length < 16) inv.push(0); 
-            }
+            if (fed >= levels[lvl]) { lvl++; alert("НОВЫЙ УРОВЕНЬ!"); }
+            if (eggs.length < 16) eggs.push(0);
             update();
-            tg.HapticFeedback.impactOccurred('light');
         };
 
-        function go(s) {
-            document.getElementById('screen-farm').style.display = s==='farm'?'flex':'none';
-            document.getElementById('screen-merge').style.display = s==='merge'?'flex':'none';
-            document.getElementById('f-btn').classList.toggle('active', s==='farm');
-            document.getElementById('m-btn').classList.toggle('active', s==='merge');
-            if (s === 'merge') draw();
+        function tab(t) {
+            document.getElementById('farm').style.display = t === 'farm' ? 'block' : 'none';
+            document.getElementById('inventory').style.display = t === 'inv' ? 'block' : 'none';
+            document.getElementById('f-tab').classList.toggle('active', t === 'farm');
+            document.getElementById('i-tab').classList.toggle('active', t === 'inv');
+            if (t === 'inv') render();
         }
 
-        function draw() {
-            const g = document.getElementById('grid'); g.innerHTML = '';
-            inv.forEach((item, i) => {
-                const s = document.createElement('div'); s.className = 'slot';
-                s.innerHTML = <span>${skins[item]}</span><div class="open-btn" onclick="openEgg(event,${i})">OPEN</div>;
-                g.appendChild(s);
+        function render() {
+            const div = document.getElementById('items');
+            div.innerHTML = '';
+            eggs.forEach((e, i) => {
+                const b = document.createElement('button');
+                b.innerText = "ОТКРЫТЬ 🥚";
+                b.onclick = () => {
+                    let win = Math.random() < 0.05 ? 250 : 5;
+                    corn += win;
+                    eggs.splice(i, 1);
+                    if (win > 5) alert("ДЖЕКПОТ! +250 🌽");
+                    render(); update();
+                };
+                div.appendChild(b);
             });
         }
 
-        window.openEgg = function(e, i) {
-            e.stopPropagation();
-            let isJack = Math.random() < 0.05;
-            let win = isJack ? jacks[inv[i]] : rew[inv[i]];
-            corn += win; inv.splice(i, 1);
-            if (isJack) tg.showAlert("🔥 ДЖЕКПОТ: " + win + " 🌽!");
-            update(); draw();
-        }
-
         function update() {
-            document.getElementById('ui-corn').innerText = corn;
-            document.getElementById('ui-eggs').innerText = inv.length;
-            document.getElementById('ui-lvl').innerText = lvl;
-            document.getElementById('ui-fed').innerText = fed;
-            document.getElementById('ui-next').innerText = lvls[lvl] || "MAX";
-            let p = (fed / lvls[lvl]) * 100;
-            document.getElementById('bar-fill').style.width = Math.min(p, 100) + "%";
+            document.getElementById('corn').innerText = corn;
+            document.getElementById('eggs').innerText = eggs.length;
+            document.getElementById('lvl').innerText = lvl;
+            document.getElementById('fed').innerText = fed;
         }
-        update();
     </script>
 </body>
 </html>
