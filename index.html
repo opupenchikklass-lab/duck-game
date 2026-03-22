@@ -1,116 +1,109 @@
-[22.03.2026 20:54] Роман: <!DOCTYPE html>
+[22.03.2026 21:11] Роман: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Game</title>
+    <title>Duck Elite</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #1a1a1a; color: white; text-align: center; font-family: Arial; margin: 0; padding: 0; user-select: none; }
-        .header { display: flex; justify-content: space-around; padding: 20px; background: #222; border-bottom: 2px solid #ffd700; font-size: 20px; font-weight: bold; }
+        body { background: #0e0e0e; color: white; font-family: 'Arial', sans-serif; margin: 0; text-align: center; user-select: none; }
+        .top-bar { display: flex; justify-content: space-between; padding: 20px; font-weight: bold; background: #151515; }
+        .balance { font-size: 32px; color: #fff; margin-top: 20px; }
         
-        /* СЕТКА СЛОТОВ - теперь она будет видна сразу */
-        .grid { display: grid; grid-template-columns: repeat(3, 90px); grid-gap: 15px; justify-content: center; margin-top: 30px; }
-        .slot { 
-            width: 90px; height: 90px; background: #2a2a2a; border-radius: 12px; 
-            border: 2px solid #444; display: flex; align-items: center; justify-content: center; 
-            font-size: 40px; cursor: pointer; position: relative;
+        /* Карточка утки */
+        .duck-card {
+            background: #1c1c1c; margin: 20px auto; width: 85%; border-radius: 25px;
+            padding: 20px; border: 2px solid #333; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .slot.selected { border-color: #ffd700; box-shadow: 0 0 10px #ffd700; }
-        .lvl { position: absolute; bottom: 5px; right: 5px; background: #ffd700; color: black; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .rarity { position: absolute; top: 15px; right: 20px; color: #00ff00; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .lvl-label { position: absolute; top: 15px; left: 20px; color: #aaa; font-size: 12px; }
+        .duck-img-container { margin: 30px 0; height: 200px; display: flex; align-items: center; justify-content: center; }
+        .duck-img { width: 180px; filter: drop-shadow(0 0 15px rgba(255,215,0,0.3)); }
+        
+        /* Кнопка действия */
+        .feed-btn {
+            background: #f1c40f; color: black; border: none; width: 90%;
+            padding: 18px; border-radius: 15px; font-weight: bold; font-size: 16px;
+            cursor: pointer; margin-top: 10px;
+        }
+        .feed-btn span { display: block; font-size: 10px; opacity: 0.7; }
 
-        .btn-buy { margin-top: 30px; padding: 15px 30px; font-size: 18px; background: #ffd700; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: black; }
-        #status { margin-top: 15px; color: #ffd700; font-size: 14px; min-height: 20px; }
+        /* Прогресс бар снизу */
+        .progress-container { width: 90%; margin: 20px auto; background: #222; height: 12px; border-radius: 10px; overflow: hidden; position: relative; }
+        .progress-fill { background: #f39c12; width: 40%; height: 100%; transition: width 0.3s; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div>🌽 КОРМ: <span id="corn">100</span></div>
-    <div>🥚 ЯЙЦА: <span id="eggs">0</span></div>
-</div>
+    <div class="top-bar">
+        <div>🌽 <span id="corn">100</span></div>
+        <div>⭐ <span id="stars">15</span></div>
+    </div>
 
-<div id="status">Нажми "Купить яйцо"</div>
+    <div class="balance">🪙 <span id="tokens">156.50</span></div>
 
-<div class="grid">
-    <div class="slot" id="s0" onclick="handClick(0)"></div>
-    <div class="slot" id="s1" onclick="handClick(1)"></div>
-    <div class="slot" id="s2" onclick="handClick(2)"></div>
-    <div class="slot" id="s3" onclick="handClick(3)"></div>
-    <div class="slot" id="s4" onclick="handClick(4)"></div>
-    <div class="slot" id="s5" onclick="handClick(5)"></div>
-    <div class="slot" id="s6" onclick="handClick(6)"></div>
-    <div class="slot" id="s7" onclick="handClick(7)"></div>
-    <div class="slot" id="s8" onclick="handClick(8)"></div>
-</div>
+    <div class="duck-card">
+        <div class="lvl-label" id="duck-lvl">LVL 4</div>
+        <div class="rarity" id="duck-rarity">UNCOMMON</div>
+        
+        <div class="duck-img-container">
+            <img src="duck-dapper.png" class="duck-img" id="duck-display">
+        </div>
 
-<button class="btn-buy" onclick="buyEgg()">КУПИТЬ ЯЙЦО (5 🌽)</button>
+        <button class="feed-btn" onclick="feedDuck()">
+            ТОРКНИСЬ І ГОДУЙ 🌽1
+            <span>ТА ОТРИМУЙ ТОКЕНИ</span>
+        </button>
+    </div>
 
-<script>
-    let tg = window.Telegram.WebApp;
-    tg.expand();
+    <div id="status-text" style="font-size: 12px; color: #777;">РОЗВОДИТИ 4/5 СТЕЙК</div>
+    <div class="progress-container">
+        <div class="progress-fill" id="progress"></div>
+    </div>
 
-    let corn = 100;
-    let eggsTotal = 0;
-    let openCounter = 0; 
-    let slots = Array(9).fill(null);
-    let selectedIdx = null;
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
 
-    function updateUI() {
-        for (let i = 0; i < 9; i++) {
-            let el = document.getElementById('s' + i);
-            el.className = 'slot' + (selectedIdx === i ? ' selected' : '');
-            if (slots[i]) {
-                el.innerText = slots[i].type === 'egg' ? '🥚' : '🦆';
-                if (slots[i].type === 'duck') {
-                    el.innerHTML += <div class="lvl">${slots[i].lvl}</div>;
+        let data = {
+            corn: 100,
+            tokens: 156.50,
+            progress: 40,
+            level: 4
+        };
+
+        function feedDuck() {
+            if (data.corn > 0) {
+                data.corn -= 1;
+                data.tokens += 0.02; // Фарминг токенов
+                data.progress += 5;
+                
+                if (data.progress >= 100) {
+                    data.progress = 0;
+                    data.level += 1;
+                    tg.HapticFeedback.notificationOccurred('success');
                 }
-            } else {
-                el.innerText = '';
+
+                updateUI();
+                tg.HapticFeedback.impactOccurred('medium');
             }
         }
-        document.getElementById('corn').innerText = corn;
-        document.getElementById('eggs').innerText = eggsTotal;
-    }
 
-    function buyEgg() {
-        let idx = slots.findIndex(s => s === null);
-        if (corn >= 5 && idx !== -1) {
-            corn -= 5;
-            slots[idx] = { type: 'egg', lvl: 0 };
-            updateUI();
-            tg.HapticFeedback.impactOccurred('medium');
-        }
-    }
-
-    function handClick(i) {
-        if (selectedIdx === null) {
-            if (slots[i]) selectedIdx = i;
-        } else {
-            let s1 = slots[selectedIdx];
-            let s2 = slots[i];
-[22.03.2026 20:54] Роман: if (selectedIdx !== i && s1 && s2 && s1.type === s2.type && s1.lvl === s2.lvl) {
-                if (s1.type === 'egg') {
-                    openCounter++;
-                    let nl = 1;
-                    let r = Math.random() * 100;
-                    if (openCounter >= 6 && openCounter <= 10) {
-                        if (r <= 1) nl = 4;      // 1% Лега
-                        else if (r <= 4) nl = 3; // 3% Эпик
-                        else if (r <= 24) nl = 2;// 20% Редкая
-                    }
-                    slots[i] = { type: 'duck', lvl: nl };
-                    if (openCounter >= 10) openCounter = 0;
-                } else {
-                    slots[i].lvl += 1;
-                }
-                slots[selectedIdx] = null;
-                tg.HapticFeedback.notificationOccurred('success');
+        function updateUI() {
+            document.getElementById('corn').innerText = data.corn;
+            document.getElementById('tokens').innerText = data.tokens.toFixed(2);
+            document.getElementById('progress').style.width = data.progress + '%';
+[22.03.2026 21:11] Роман: document.getElementById('duck-lvl').innerText = 'LVL ' + data.level;
+            
+            // Если уровень высокий, меняем редкость
+            if (data.level > 5) {
+                document.getElementById('duck-rarity').innerText = 'RARE';
+                document.getElementById('duck-rarity').style.color = '#3498db';
             }
-            selectedIdx = null;
         }
+
         updateUI();
-    }
-</script>
+    </script>
 </body>
 </html>
