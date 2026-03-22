@@ -1,165 +1,129 @@
-[22.03.2026 17:02] ❤️: <!DOCTYPE html>
+[22.03.2026 17:10] ❤️: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Merge Pro</title>
+    <title>Duck Jackpot Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { 
-            background: #0a0e17; display: flex; flex-direction: column; 
-            height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: #fff;
-        }
-
-        /* ВЕРХНЯЯ ПАНЕЛЬ */
-        .header { display: flex; justify-content: space-around; padding: 15px; background: rgba(0,0,0,0.3); }
-        .stat-item { background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 15px; font-size: 14px; border: 1px solid rgba(255,255,255,0.1); }
-
-        /* ИГРОВОЕ ПОЛЕ MERGE */
-        #merge-screen { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
+        body { background: #0a0e17; display: flex; flex-direction: column; height: 100vh; margin: 0; font-family: sans-serif; overflow: hidden; color: #fff; transition: background 0.3s; }
+        .header { display: flex; justify-content: space-around; padding: 15px; background: rgba(0,0,0,0.5); border-bottom: 1px solid #222; }
+        .stat-item { background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 20px; font-size: 14px; border: 1px solid #333; }
         
-        .grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-            background: rgba(255,255,255,0.03); padding: 12px; border-radius: 20px;
-            width: 90vw; max-width: 350px; border: 1px solid rgba(255,255,255,0.05);
-        }
+        #main-screen, #merge-screen { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .lvl-box { width: 80%; margin-bottom: 20px; text-align: center; }
+        .bar-bg { background: #222; height: 12px; border-radius: 6px; margin-top: 5px; border: 1px solid #444; overflow: hidden; }
+        #bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ffa500, #ff4500); transition: 0.3s; }
 
-        .slot {
-            aspect-ratio: 1/1; background: rgba(255,255,255,0.05); border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; font-size: 30px;
-            transition: all 0.2s; position: relative;
-        }
-        .slot.selected { background: rgba(255,165,0,0.2); border: 2px solid #ffa500; }
-        .slot:active { transform: scale(0.95); }
+        #duck { width: 240px; transition: transform 0.05s; }
+        #duck:active { transform: scale(0.92); }
 
-        /* ГЛАВНЫЙ ЭКРАН С УТКОЙ */
-        #farm-screen { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #duck { width: 220px; transition: transform 0.05s; cursor: pointer; }
-        #duck:active { transform: scale(0.9); }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 90%; max-width: 360px; }
+        .slot { aspect-ratio: 1/1; background: #161b22; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 24px; border: 1px solid #30363d; position: relative; }
+        .slot.selected { border-color: #ffa500; background: rgba(255,165,0,0.1); }
+        .btn-open { font-size: 9px; background: #ffa500; color: #000; padding: 2px 4px; border-radius: 4px; margin-top: 4px; font-weight: bold; }
 
-        /* НИЖНЕЕ МЕНЮ */
-        .footer {
-            display: flex; justify-content: space-around; padding: 10px 0 30px;
-            background: #0f131a; border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .nav-item { opacity: 0.5; font-size: 10px; text-align: center; cursor: pointer; }
+        .footer { display: flex; justify-content: space-around; padding: 15px 0 30px; background: #0f131a; }
+        .nav-item { opacity: 0.4; text-align: center; font-size: 11px; cursor: pointer; }
         .nav-item.active { opacity: 1; color: #ffa500; }
-        .nav-icon { font-size: 22px; display: block; margin-bottom: 4px; }
-
-        .floating-text { position: absolute; animation: up 0.6s forwards; pointer-events: none; font-weight: bold; }
-        @keyframes up { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
+        
+        /* Эффект Джекпота */
+        .jackpot-flash { background: #d4af37 !important; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="stat-item">🔥 ЗГРАЯ</div>
-        <div class="stat-item">🌽 <span id="corn">100</span></div>
-        <div class="stat-item">🥚 <span id="egg-count">0</span></div>
+        <div class="stat-item">🌽 <span id="corn-val">100</span></div>
+        <div class="stat-item">🥚 <span id="egg-val">0</span></div>
     </div>
 
-    <div id="farm-screen">
-        <div style="font-size: 40px; font-weight: 900; margin-bottom: 20px;" id="main-score">0</div>
-        <img id="duck" src="duck-dapper.png" onclick="tapDuck(event)">
-        <div style="margin-top: 20px; background: #fff; color: #000; padding: 10px 25px; border-radius: 20px; font-weight: bold;">TAP TO FARM</div>
+    <div id="main-screen">
+        <div class="lvl-box">
+            <div style="font-weight: bold; color: #ffa500;">LVL <span id="lvl-num">1</span></div>
+            <div style="font-size: 11px; color: #888;"><span id="exp-val">0</span> / <span id="next-lvl">1000</span> 🌽</div>
+            <div class="bar-bg"><div id="bar-fill"></div></div>
+        </div>
+        <img id="duck" src="duck-dapper.png" onclick="handleTap(event)">
     </div>
 
-    <div id="merge-screen" style="display: none;">
-        <h3 style="margin-bottom: 15px; color: #ffa500;">EGG INVENTORY</h3>
+    <div id="merge-screen" style="display:none">
+        <h3 id="merge-title" style="color: #ffa500">ИНВЕНТАРЬ</h3>
         <div class="grid" id="grid"></div>
-        <p style="font-size: 12px; color: #555; margin-top: 15px;">Нажми на два одинаковых яйца, чтобы объединить</p>
     </div>
 
     <div class="footer">
-        <div class="nav-item" onclick="showScreen('farm')">
-            <span class="nav-icon">📈</span>РИНОК
-        </div>
-        <div class="nav-item active" id="nav-farm" onclick="showScreen('farm')">
-            <span class="nav-icon">🦆</span>КАЧКИ
-        </div>
-        <div class="nav-item" id="nav-merge" onclick="showScreen('merge')">
-            <span class="nav-icon">🥚</span>ЯЙЦЯ
-        </div>
+        <div class="nav-item active" id="n-farm" onclick="tab('farm')"><span>🦆</span><br>КАЧКИ</div>
+        <div class="nav-item" id="n-merge" onclick="tab('merge')"><span>🥚</span><br>ЯЙЦЯ</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
-[22.03.2026 17:02] ❤️: let corn = 100;
-        let eggs = []; // Массив индексов уровней яиц
-        let selectedSlot = null;
+        let corn = 100;
+        let totalFed = 0;
+        let level = 1;
+        let inventory = [];
+        let selectedIdx = null;
 
-        const eggSkins = ['🥚', '🥚', '✨', '💎', '🏺', '👑', '🔥', '🌈'];
-
-        function tapDuck(e) {
+        const lvls = [0, 1000, 2500, 4000, 8000, 20000, 30000];
+        const eggSkins = ['🥚', '✨', '💎', '🏺', '👑', '🔥', '🌈', '🌙', '☀️', '💠'];
+        const rewards = [5, 15, 40, 100, 250, 600, 1500, 4000, 10000, 25000];
+        const jackpots = [250, 750, 1250, 2500, 3000, 5000, 15000, 20000, 30000, 50000];
+[22.03.2026 17:10] ❤️: function handleTap(e) {
             if (corn <= 0) return;
-            corn--;
-            
-            // На 1 уровне даем 2 яйца
-            eggs.push(0, 0); 
-            
+            corn--; totalFed++;
+            if (totalFed >= lvls[level] && level < 6) { level++; }
+            if (inventory.length < 16) inventory.push(0); 
             updateUI();
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            
-            const txt = document.createElement('div');
-            txt.className = 'floating-text';
-            txt.innerText = '+2 🥚';
-            txt.style.left = e.clientX + 'px';
-            txt.style.top = e.clientY + 'px';
-            document.body.appendChild(txt);
-            setTimeout(() => txt.remove(), 600);
+            tg.HapticFeedback.impactOccurred('light');
         }
 
-        function showScreen(type) {
-            document.getElementById('farm-screen').style.display = type === 'farm' ? 'flex' : 'none';
-            document.getElementById('merge-screen').style.display = type === 'merge' ? 'flex' : 'none';
-            
-            document.getElementById('nav-farm').classList.toggle('active', type === 'farm');
-            document.getElementById('nav-merge').classList.toggle('active', type === 'merge');
-            
-            if (type === 'merge') renderGrid();
+        function tab(t) {
+            document.getElementById('main-screen').style.display = t === 'farm' ? 'flex' : 'none';
+            document.getElementById('merge-screen').style.display = t === 'merge' ? 'flex' : 'none';
+            document.getElementById('n-farm').classList.toggle('active', t === 'farm');
+            document.getElementById('n-merge').classList.toggle('active', t === 'merge');
+            if (t === 'merge') renderGrid();
         }
 
         function renderGrid() {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
+            const g = document.getElementById('grid');
+            g.innerHTML = '';
             for (let i = 0; i < 16; i++) {
                 const slot = document.createElement('div');
-                slot.className = 'slot' + (selectedSlot === i ? ' selected' : '');
-                slot.innerText = eggs[i] !== undefined ? eggSkins[eggs[i]] : '';
-                slot.onclick = () => handleSlotClick(i);
-                grid.appendChild(slot);
+                slot.className = 'slot' + (selectedIdx === i ? ' selected' : '');
+                if (inventory[i] !== undefined) {
+                    slot.innerHTML = <div>${eggSkins[inventory[i]]}</div><div class="btn-open" onclick="openEgg(event, ${i})">OPEN</div>;
+                    slot.onclick = () => selectSlot(i);
+                }
+                g.appendChild(slot);
             }
         }
 
-        function handleSlotClick(i) {
-            if (eggs[i] === undefined) {
-                selectedSlot = null;
-            } else if (selectedSlot === null) {
-                selectedSlot = i;
-            } else if (selectedSlot === i) {
-                selectedSlot = null;
-            } else {
-                // Пытаемся объединить
-                if (eggs[selectedSlot] === eggs[i] && eggs[i] < eggSkins.length - 1) {
-                    eggs[i]++; // Повышаем уровень
-                    eggs.splice(selectedSlot, 1); // Удаляем второе
-                    selectedSlot = null;
-                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                } else {
-                    selectedSlot = i;
-                }
+        function selectSlot(i) {
+            if (selectedIdx === null) selectedIdx = i;
+            else if (selectedIdx === i) selectedIdx = null;
+            else {
+                if (inventory[selectedIdx] === inventory[i] && inventory[i] < 9) {
+                    inventory[i]++; inventory.splice(selectedIdx, 1);
+                    selectedIdx = null;
+                    tg.HapticFeedback.notificationOccurred('success');
+                } else { selectedIdx = i; }
             }
             renderGrid();
         }
 
-        function updateUI() {
-            document.getElementById('corn').innerText = corn;
-            document.getElementById('egg-count').innerText = eggs.length;
-            document.getElementById('main-score').innerText = eggs.length;
-        }
+        function openEgg(e, i) {
+            e.stopPropagation();
+            let eggLvl = inventory[i];
+            let isJackpot = Math.random() < 0.05; // 5% шанс
+            let win = isJackpot ? jackpots[eggLvl] : rewards[eggLvl];
 
-        updateUI();
-    </script>
-</body>
-</html>
+            corn += win;
+            inventory.splice(i, 1);
+            selectedIdx = null;
+
+            if (isJackpot) {
+                document.body.classList.add('jackpot-flash');
+                setTimeout(() => document.body.classList.
