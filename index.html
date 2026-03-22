@@ -1,81 +1,98 @@
-<!DOCTYPE html>
+[22.03.2026 20:43] Роман: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Game: Feed & Egg</title>
+    <title>Duck Merge: Legend Hunt</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #1a1a1a; color: white; text-align: center; font-family: 'Segoe UI', sans-serif; user-select: none; margin: 0; padding: 0; }
-        .stats-container { display: flex; justify-content: center; gap: 15px; padding: 20px; font-weight: bold; }
-        .stat-box { background: #2a2a2a; padding: 10px 15px; border-radius: 12px; border: 1px solid #444; min-width: 100px; }
-        .duck-container { margin-top: 30px; cursor: pointer; transition: transform 0.1s; display: inline-block; }
-        .duck-container:active { transform: scale(0.95); }
-        .duck-img { width: 280px; border-radius: 20px; box-shadow: 0 0 25px rgba(255, 215, 0, 0.2); }
-        .hint { margin-top: 25px; font-size: 16px; color: #ffd700; height: 24px; }
-        .level { color: #aaa; margin-bottom: 5px; font-size: 14px; }
+        body { background: #121212; color: white; font-family: 'Arial', sans-serif; text-align: center; margin: 0; user-select: none; }
+        .header { display: flex; justify-content: space-around; background: #1e1e1e; padding: 15px; border-bottom: 2px solid #ffd700; }
+        .stat { font-weight: bold; font-size: 18px; }
+        .counter { color: #aaa; font-size: 12px; margin-top: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 90px); grid-gap: 12px; justify-content: center; margin-top: 20px; }
+        .slot { width: 90px; height: 90px; background: #252525; border-radius: 15px; border: 2px solid #333; display: flex; align-items: center; justify-content: center; position: relative; transition: 0.2s; }
+        .slot.selected { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+        .lvl { position: absolute; bottom: 5px; right: 5px; background: #ffd700; color: black; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .btn-buy { background: #ffd700; color: black; border: none; padding: 16px 32px; border-radius: 12px; font-weight: bold; margin-top: 30px; cursor: pointer; font-size: 16px; }
+        #log { height: 40px; margin-top: 15px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .rare { color: #3498db; } .epic { color: #9b59b6; } .lega { color: #f1c40f; text-shadow: 0 0 10px gold; }
     </style>
 </head>
 <body>
 
-    <div class="stats-container">
-        <div class="stat-box">🌽 Корм: <span id="corn">100</span></div>
-        <div class="stat-box">🥚 Яйца: <span id="eggs">0</span></div>
-    </div>
+<div class="header">
+    <div class="stat">🌽 <span id="corn">100</span></div>
+    <div class="stat">💎 <span id="tokens">0</span></div>
+</div>
 
-    <div class="level">LEVEL 1</div>
-    <div class="duck-container" onclick="handleGameClick()">
-        <img src="duck-dapper.png" class="duck-img">
-    </div>
+<div class="counter">Яиц открыто в цикле: <span id="egg-count">0</span>/10</div>
+<div id="log"></div>
 
-    <div class="hint" id="hint">Нажми, чтобы покормить! 🌽</div>
+<div class="grid" id="grid"></div>
 
-    <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
+<button class="btn-buy" onclick="buyEgg()">КУПИТЬ ЯЙЦО (5 🌽)</button>
 
-        let corn = 100; 
-        let eggs = 0;   
-        let step = 0; // 0 - кормим, 1 - ждем яйцо
+<script>
+    let tg = window.Telegram.WebApp;
+    tg.expand();
 
-        const cornEl = document.getElementById('corn');
-        const eggsEl = document.getElementById('eggs');
-        const hintEl = document.getElementById('hint');
+    let corn = 100;
+    let tokens = 0;
+    let eggCycleCounter = 0; // Считаем яйца от 1 до 10
+    let slots = Array(9).fill(null);
+    let selectedIndex = null;
 
-        function handleGameClick() {
-            // ШАГ 1: КОРМИМ (1-й клик)
-            if (step === 0) {
-                if (corn > 0) {
-                    corn -= 1;
-                    cornEl.innerText = corn;
-                    hintEl.innerText = "Утка ест... Жми еще раз! 🥚";
-                    hintEl.style.color = "#ffd700";
-                    step = 1; 
-                    
-                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                } else {
-                    hintEl.innerText = "Корм закончился! 😱";
-                    hintEl.style.color = "red";
+    function render() {
+        const gridEl = document.getElementById('grid');
+        gridEl.innerHTML = '';
+        slots.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'slot' + (selectedIndex === i ? ' selected' : '');
+            div.onclick = () => handleClick(i);
+            if (item) {
+                div.innerHTML = <span style="font-size: 45px;">${item.type === 'egg' ? '🥚' : '🦆'}</span>;
+                if (item.type === 'duck') {
+                    div.innerHTML += <div class="lvl">${item.lvl}</div>;
                 }
-            } 
-            // ШАГ 2: ПОЛУЧАЕМ ЯЙЦО (2-й клик)
-            else if (step === 1) {
-                eggs += 1;
-                eggsEl.innerText = eggs;
-                hintEl.innerText = "Яйцо получено! Давай еще 🌽";
-                hintEl.style.color = "#4caf50";
-                step = 0; 
-                
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-
-                // Передаем данные боту для сохранения
-                tg.sendData(JSON.stringify({
-                    action: 'update',
-                    corn: corn,
-                    eggs: eggs
-                }));
             }
+            gridEl.appendChild(div);
+        });
+        document.getElementById('corn').innerText = corn;
+        document.getElementById('tokens').innerText = tokens;
+        document.getElementById('egg-count').innerText = eggCycleCounter;
+    }
+
+    function buyEgg() {
+        let emptyIdx = slots.findIndex(s => s === null);
+        if (corn >= 5 && emptyIdx !== -1) {
+            corn -= 5;
+            slots[emptyIdx] = { type: 'egg', lvl: 0 };
+            tg.HapticFeedback.impactOccurred('medium');
+            render();
         }
-    </script>
-</body>
-</html>
+    }
+
+    function handleClick(i) {
+        if (selectedIndex === null) {
+            if (slots[i]) selectedIndex = i;
+        } else {
+            let s1 = slots[selectedIndex];
+            let s2 = slots[i];
+            
+            if (i !== selectedIndex && s1 && s2 && s1.type === s2.type && s1.lvl === s2.lvl) {
+[22.03.2026 20:43] Роман: if (s1.type === 'egg') {
+                    eggCycleCounter++; // Увеличиваем счетчик открытых яиц
+                    let log = document.getElementById('log');
+                    let resultLvl = 1;
+                    let rand = Math.random() * 100; // 0.00 - 100.00
+
+                    // ПРОВЕРКА ШАНСОВ (только с 6 по 10 яйцо)
+                    if (eggCycleCounter >= 6 && eggCycleCounter <= 10) {
+                        if (rand <= 1) { // ЛЕГА 1%
+                            resultLvl = 4;
+                            log.innerHTML = "<span class='lega'>🏆 ЛЕГЕНДАРНАЯ УТКА! 🏆</span>";
+                            tokens += 100;
+                        } else if (rand <= 4) { // ЭПИК (3%) -> 1 + 3 = 4
+                            resultLvl = 3;
+                            log
