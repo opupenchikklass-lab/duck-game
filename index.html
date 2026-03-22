@@ -1,31 +1,37 @@
-[22.03.2026 17:23] ❤️: <!DOCTYPE html>
+[22.03.2026 17:31] ❤️: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Game Pro</title>
+    <title>Duck Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #0a0e17; color: #fff; margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .header { display: flex; justify-content: space-around; padding: 15px; background: rgba(0,0,0,0.5); border-bottom: 1px solid #222; }
+        body { background: #0a0e17; color: #fff; margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; align-items: center; }
+        .header { display: flex; justify-content: space-around; width: 100%; padding: 15px 0; background: rgba(0,0,0,0.5); }
         .stat-item { background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 20px; border: 1px solid #333; min-width: 80px; text-align: center; }
         
-        #screen-farm, #screen-merge { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+        #screen-farm { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
         
         .lvl-box { width: 80%; text-align: center; margin-bottom: 20px; }
         .bar-bg { background: #222; height: 12px; border-radius: 6px; border: 1px solid #444; overflow: hidden; margin-top: 5px; }
-        #bar-fill { width: 0%; height: 100%; background: #ffa500; transition: width 0.3s; }
+        #bar-fill { width: 0%; height: 100%; background: orange; transition: width 0.3s; }
 
-        #duck-img { width: 220px; cursor: pointer; transition: transform 0.05s; }
-        #duck-img:active { transform: scale(0.9); }
+        /* КОНТЕЙНЕР ДЛЯ КЛИКА */
+        .duck-clicker { 
+            width: 280px; height: 280px; 
+            position: relative; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        #duck-img { width: 100%; border-radius: 15px; pointer-events: none; transition: transform 0.05s; }
+        .duck-clicker:active #duck-img { transform: scale(0.95); }
 
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 90%; max-width: 360px; }
-        .slot { aspect-ratio: 1/1; background: #161b22; border-radius: 12px; border: 1px solid #30363d; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 24px; }
-        .open-btn { background: #ffa500; color: #000; font-size: 10px; font-weight: bold; padding: 3px 6px; border-radius: 4px; margin-top: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 90%; margin-top: 20px; }
+        .slot { aspect-ratio: 1/1; background: #161b22; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; }
+        .open-btn { background: orange; color: #000; font-size: 9px; padding: 2px 5px; border-radius: 4px; margin-top: 3px; font-weight: bold; }
 
-        .footer { display: flex; justify-content: space-around; padding: 15px 0 30px; background: #0f131a; border-top: 1px solid #222; }
-        .nav-item { opacity: 0.4; text-align: center; font-size: 11px; cursor: pointer; }
-        .nav-item.active { opacity: 1; color: #ffa500; font-weight: bold; }
+        .footer { display: flex; justify-content: space-around; width: 100%; padding: 20px 0; background: #0f131a; border-top: 1px solid #222; }
+        .nav-item { opacity: 0.5; text-align: center; font-size: 11px; cursor: pointer; }
+        .nav-item.active { opacity: 1; color: orange; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -37,15 +43,18 @@
 
     <div id="screen-farm">
         <div class="lvl-box">
-            <b style="color:#ffa500">LEVEL <span id="ui-lvl">1</span></b>
+            <b style="color:orange">LVL <span id="ui-lvl">1</span></b>
             <div style="font-size:12px; color:#888"><span id="ui-fed">0</span> / <span id="ui-next">1000</span></div>
             <div class="bar-bg"><div id="bar-fill"></div></div>
         </div>
-        <img id="duck-img" src="duck-dapper.png" onclick="handleTap()">
+        
+        <div class="duck-clicker" onclick="handleTap()">
+            <img id="duck-img" src="duck-dapper.png">
+        </div>
     </div>
 
     <div id="screen-merge" style="display:none">
-        <h3 style="color:#ffa500">ИНВЕНТАРЬ</h3>
+        <h3 style="color:orange">ЯЙЦЯ</h3>
         <div class="grid" id="grid"></div>
     </div>
 
@@ -55,9 +64,8 @@
     </div>
 
     <script>
-        // Инициализация
-        const tg = window.Telegram ? window.Telegram.WebApp : null;
-        if (tg) tg.expand();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
         let corn = 100;
         let totalFed = 0;
@@ -68,39 +76,37 @@
         const eggSkins = ['🥚', '✨', '💎', '🏺', '👑', '🔥', '🌈', '🌙', '☀️', '💠'];
         const rewards = [5, 15, 40, 100, 250, 600, 1500, 4000, 10000, 25000];
         const jackpots = [250, 750, 1250, 2500, 3000, 5000, 15000, 20000, 30000, 50000];
-
-        function handleTap() {
+[22.03.2026 17:31] ❤️: function handleTap() {
             if (corn <= 0) {
-                if (tg) tg.showAlert("Кукуруза кончилась! Открывай яйца.");
+                tg.showAlert("Корм закончился! Открывай яйца в инвентаре.");
                 return;
             }
 
-            // 1. Уменьшаем корм
             corn--;
             totalFed++;
-[22.03.2026 17:23] ❤️: // 2. Проверяем уровень
+
+            // Проверка уровня
             if (totalFed >= levels[level] && level < 6) {
                 level++;
-                if (tg) tg.HapticFeedback.notificationOccurred('success');
+                tg.HapticFeedback.notificationOccurred('success');
             }
 
-            // 3. Добавляем 2 яйца на 1 уровне
+            // Добавляем 2 яйца на 1 уровне
             if (inventory.length < 16) {
                 inventory.push(0);
                 if (level === 1 && inventory.length < 16) inventory.push(0);
             }
 
-            // 4. Обновляем экран
             updateUI();
-            if (tg) tg.HapticFeedback.impactOccurred('light');
+            tg.HapticFeedback.impactOccurred('light');
         }
 
-        function showTab(tab) {
-            document.getElementById('screen-farm').style.display = tab === 'farm' ? 'flex' : 'none';
-            document.getElementById('screen-merge').style.display = tab === 'merge' ? 'flex' : 'none';
-            document.getElementById('btn-farm').classList.toggle('active', tab === 'farm');
-            document.getElementById('btn-merge').classList.toggle('active', tab === 'merge');
-            if (tab === 'merge') renderGrid();
+        function showTab(t) {
+            document.getElementById('screen-farm').style.display = t === 'farm' ? 'flex' : 'none';
+            document.getElementById('screen-merge').style.display = t === 'merge' ? 'flex' : 'none';
+            document.getElementById('btn-farm').classList.toggle('active', t === 'farm');
+            document.getElementById('btn-merge').classList.toggle('active', t === 'merge');
+            if (t === 'merge') renderGrid();
         }
 
         function renderGrid() {
@@ -117,19 +123,15 @@
             }
         }
 
-        function openEgg(e, index) {
+        function openEgg(e, idx) {
             e.stopPropagation();
-            const eggLvl = inventory[index];
-            const isJackpot = Math.random() < 0.05; // 5% шанс
+            const eggLvl = inventory[idx];
+            const isJackpot = Math.random() < 0.05;
             const win = isJackpot ? jackpots[eggLvl] : rewards[eggLvl];
 
             corn += win;
-            inventory.splice(index, 1);
-
-            if (isJackpot && tg) {
-                tg.showAlert("🔥 JACKPOT! +" + win + " 🌽");
-            }
-
+            inventory.splice(idx, 1);
+            if (isJackpot) tg.showAlert("🔥 ДЖЕКПОТ! +" + win + " 🌽");
             updateUI();
             renderGrid();
         }
@@ -140,12 +142,9 @@
             document.getElementById('ui-lvl').innerText = level;
             document.getElementById('ui-fed').innerText = totalFed;
             document.getElementById('ui-next').innerText = levels[level] || "MAX";
-            
-            const progress = (totalFed / levels[level]) * 100;
-            document.getElementById('bar-fill').style.width = Math.min(progress, 100) + "%";
+            let p = (totalFed / levels[level]) * 100;
+            document.getElementById('bar-fill').style.width = Math.min(p, 100) + "%";
         }
-
-        // Запуск
         updateUI();
     </script>
 </body>
