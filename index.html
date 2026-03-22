@@ -6,52 +6,85 @@
     <title>Duck Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { 
-            background: radial-gradient(circle, #ffeb3b, #fbc02d); 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
-            font-family: 'Arial', sans-serif; 
-            overflow: hidden; 
-            user-select: none;
-        }
-        #score { 
-            font-size: 60px; 
-            font-weight: bold; 
-            color: #3e2723; 
-            margin-bottom: 10px; 
-        }
-        #duck-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        #duck { 
-            width: 220px; 
-            cursor: pointer; 
-            transition: transform 0.05s; 
-            -webkit-tap-highlight-color: transparent;
-        }
-        #duck:active { 
-            transform: scale(0.85); 
-        }
-        .tap-text {
-            position: absolute;
-            color: #3e2723;
-            font-weight: bold;
-            font-size: 24px;
-            pointer-events: none;
-            animation: floatUp 0.5s ease-out forwards;
-        }
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-100px); }
-        }
+       
     </style>
+      /* 1. Общий фон: Мрачный, темно-фиолетовый/чёрный градиент */
+    body { 
+        background: radial-gradient(circle at 50% 120%, #1a1a2e 0%, #0a0e17 100%); 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: flex-start; /* Начинаем контент сверху, как на скрине */
+        height: 100vh; 
+        margin: 0; 
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+        overflow: hidden; 
+        user-select: none;
+        color: #fff;
+        padding-top: 60px; /* Отступ сверху для заголовка */
+    }
+
+    /* 2. Шрифт счета: Огромный, белый, неоновый */
+    #score { 
+        font-size: 80px; 
+        font-weight: 900; 
+        color: #fff; 
+        text-shadow: 0 0 10px rgba(255,255,255,0.4), 0 0 30px rgba(255, 111, 0, 0.3);
+        margin-bottom: 20px;
+        z-index: 10;
+        letter-spacing: -2px; /* Более сжатые цифры */
+    }
+
+    /* 3. Контейнер для утки: Рамка, как на скрине */
+    #duck-container {
+        position: relative;
+        perspective: 1000px;
+        z-index: 5;
+    }
+
+    /* 4. Рамка (Псевдоэлемент): Тонкая, темно-зеленая */
+    #duck-container::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        left: -15px;
+        right: -15px;
+        bottom: -20px;
+        border: 2px solid rgba(46, 125, 50, 0.4); /* Тускло-зеленый */
+        border-radius: 12px;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    /* 5. Утка: Твой эмодзи, но крупнее и с тенью */
+    #duck { 
+        width: 260px; 
+        filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
+        cursor: pointer; 
+        transition: transform 0.05s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    #duck:active { 
+        transform: scale(0.85); 
+    }
+
+    /* 6. Летающий текст +1: Белый, сочный */
+    .tap-text {
+        position: absolute;
+        color: #fff;
+        font-weight: 900;
+        font-size: 36px;
+        text-shadow: 0 0 10px rgba(255,255,255,0.5), 2px 2px 0px #e65100;
+        pointer-events: none;
+        animation: floatUp 0.6s ease-out forwards;
+        z-index: 100;
+    }
+
+    @keyframes floatUp {
+        0% { opacity: 1; transform: translateY(0) scale(1); }
+        100% { opacity: 0; transform: translateY(-160px) scale(1.4); }
+    }
 </head>
 <body>
     <div id="score">0</div>
