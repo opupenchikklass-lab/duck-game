@@ -1,121 +1,132 @@
-[22.03.2026 21:42] Роман: <!DOCTYPE html>
+[22.03.2026 21:45] Роман: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Farm Fix</title>
+    <title>Duck Duck Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #0b0b0b; color: white; font-family: sans-serif; margin: 0; text-align: center; user-select: none; }
-        .stats { display: flex; justify-content: space-around; padding: 15px; background: #111; border-bottom: 1px solid #222; }
-        .balance { font-size: 40px; font-weight: 900; margin: 20px 0; }
+        :root { --gold: #f1c40f; --bg: #0e0e0e; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; user-select: none; }
         
-        .card { background: #161616; width: 90%; margin: 0 auto; border-radius: 20px; padding: 20px; border: 1px solid #333; }
-        .duck-img { width: 150px; margin: 10px 0; }
+        .header { display: flex; justify-content: space-around; padding: 15px; background: #111; border-bottom: 1px solid #333; }
+        .balance { font-size: 45px; font-weight: 900; margin: 20px 0; }
+
+        .duck-card { background: #151515; width: 88%; margin: 0 auto; border-radius: 25px; padding: 25px 15px; border: 1px solid #333; }
+        .lvl-label { color: #666; font-weight: bold; font-size: 14px; margin-bottom: 10px; }
+        .duck-img { width: 170px; margin-bottom: 20px; transition: transform 0.1s; }
+        .duck-img:active { transform: scale(0.95); }
         
-        /* Шкала 1000 */
-        .progress-container { width: 100%; height: 12px; background: #000; border-radius: 6px; margin: 15px 0; overflow: hidden; border: 1px solid #222; }
-        .progress-fill { height: 100%; background: #f1c40f; width: 0%; transition: width 0.1s; }
-        
-        .btn { width: 100%; background: #f1c40f; color: black; border: none; padding: 18px; border-radius: 12px; font-weight: 900; font-size: 18px; cursor: pointer; }
-        
-        /* Сетка 4x4 */
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 90%; margin: 20px auto; background: #111; padding: 10px; border-radius: 15px; }
-        .slot { aspect-ratio: 1; background: #1a1a1a; border-radius: 8px; border: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 20px; position: relative; }
-        .slot.active { border-color: #f1c40f; }
+        /* ШКАЛА РОСТА (1000) */
+        .xp-box { width: 90%; margin: 0 auto 15px; }
+        .xp-bg { width: 100%; height: 12px; background: #000; border-radius: 6px; overflow: hidden; border: 1px solid #222; }
+        .xp-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.1s; }
+        .xp-info { font-size: 11px; color: #444; margin-top: 8px; text-transform: uppercase; font-weight: bold; }
+
+        .btn-feed { 
+            width: 100%; background: var(--gold); border: none; padding: 20px; 
+            border-radius: 18px; color: black; font-weight: 900; font-size: 20px; cursor: pointer;
+        }
+
+        /* ИНВЕНТАРЬ (СЕТКА 4x4) */
+        .inv-title { margin-top: 30px; font-size: 11px; color: #333; text-transform: uppercase; font-weight: bold; }
+        .grid { 
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; 
+            width: 90%; margin: 15px auto; background: #111; padding: 12px; border-radius: 20px; 
+        }
+        .slot { 
+            aspect-ratio: 1; background: #181818; border-radius: 12px; border: 1px solid #222;
+            display: flex; align-items: center; justify-content: center; font-size: 30px; 
+        }
     </style>
 </head>
 <body>
 
-    <div class="stats">
-        <div>🌽 <span id="corn">1000</span></div>
-        <div>⭐ 15</div>
+    <div class="header">
+        <div>🌽 КОРМ: <span id="corn-ui">1000</span></div>
+        <div style="color: var(--gold);">⭐ 15</div>
     </div>
 
-    <div class="balance" id="money">156.50</div>
+    <div class="balance" id="money-ui">156.50</div>
 
-    <div class="card">
-        <div style="font-size: 12px; color: #555;">LVL 4</div>
-        <img src="duck-dapper.png" class="duck-img">
-        <div class="progress-container">
-            <div class="progress-fill" id="bar"></div>
+    <div class="duck-card">
+        <div class="lvl-label" id="lvl-ui">LVL 4</div>
+        <img src="https://i.ibb.co/p6V8hP5/duck.png" class="duck-img" onclick="feedAction()">
+        
+        <div class="xp-box">
+            <div class="xp-bg"><div class="xp-fill" id="xp-bar"></div></div>
+            <div class="xp-info"><span id="xp-val">0</span> / 1000 ДО РОСТУ</div>
         </div>
-        <div style="font-size: 10px; color: #444; margin-bottom: 10px;"><span id="xp">0</span> / 1000 ДО РОСТУ</div>
-        <button class="btn" onclick="doAction()">ГОДУВАТИ 🌽1</button>
+
+        <button class="btn-feed" onclick="feedAction()">ГОДУВАТИ 🌽1</button>
     </div>
 
+    <div class="inv-title">ТВОЇ ЯЙЦЯ (ИНВЕНТАРЬ)</div>
     <div class="grid" id="grid"></div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        let data = {
+        let state = {
             corn: 1000,
             money: 156.50,
             xp: 0,
+            lvl: 4,
             taps: 0,
-            slots: Array(16).fill(null),
-            selected: null
+            slots: Array(16).fill(null)
         };
 
-        function doAction() {
-            if (data.corn <= 0) return;
+        function feedAction() {
+            if (state.corn <= 0) return;
 
-            data.corn--;
-            data.money += 0.02;
-            data.xp++;
-            data.taps++;
-
-            // Каждые 2 тапа - яйцо
-            if (data.taps % 2 === 0) {
-                let empty = data.slots.indexOf(null);
-                if (empty !== -1) data.slots[empty] = { type: 'egg', lvl: 1 };
+            // 1. Уменьшаем корм, прибавляем баланс
+            state.corn--;
+            state.money += 0.02;
+            
+            // 2. Увеличиваем шкалу роста утки (до 1000)
+            state.xp++;
+            if (state.xp >= 1000) {
+                state.xp = 0;
+                state.lvl++;
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            }
+[22.03.2026 21:45] Роман: // 3. Выпадение яйца КАЖДЫЕ 2 ТАПА
+            state.taps++;
+            if (state.taps % 2 === 0) {
+                let emptyIndex = state.slots.indexOf(null);
+                if (emptyIndex !== -1) {
+                    state.slots[emptyIndex] = '🥚';
+                }
             }
 
-            // Рост уровня (1000)
-            if (data.xp >= 1000) {
-                data.xp = 0;
-                tg.HapticFeedback.notificationOccurred('success');
-            }
-
-            render();
+            updateUI();
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         }
 
-        function render() {
-            document.getElementById('corn').innerText = data.corn;
-            document.getElementById('money').innerText = data.money.toFixed(2);
-            document.getElementById('xp').innerText = data.xp;
-            document.getElementById('bar').style.width = (data.xp / 1000 * 100) + '%';
+        function updateUI() {
+            // Обновление текста
+            document.getElementById('corn-ui').innerText = state.corn;
+            document.getElementById('money-ui').innerText = state.money.toFixed(2);
+            document.getElementById('lvl-ui').innerText = 'LVL ' + state.lvl;
+            document.getElementById('xp-val').innerText = state.xp;
+            
+            // Обновление шкалы
+            let progress = (state.xp / 1000) * 100;
+            document.getElementById('xp-bar').style.width = progress + '%';
 
-            const g = document.getElementById('grid');
-            g.innerHTML = '';
-            data.slots.forEach((item, i) => {
-[22.03.2026 21:42] Роман: const s = document.createElement('div');
-                s.className = 'slot' + (data.selected === i ? ' active' : '');
-                if (item) s.innerText = item.type === 'egg' ? '🥚' : '🦆';
-                s.onclick = () => select(i);
-                g.appendChild(s);
+            // Отрисовка сетки инвентаря
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            state.slots.forEach(item => {
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.innerText = item || '';
+                grid.appendChild(slot);
             });
         }
 
-        function select(i) {
-            if (data.selected === null) {
-                if (data.slots[i]) data.selected = i;
-            } else {
-                let s1 = data.slots[data.selected];
-                let s2 = data.slots[i];
-                if (data.selected !== i && s1 && s2 && s1.type === s2.type && s1.lvl === s2.lvl) {
-                    data.slots[i] = { type: 'duck', lvl: s1.lvl + 1 };
-                    data.slots[data.selected] = null;
-                }
-                data.selected = null;
-            }
-            render();
-        }
-
-        render();
+        updateUI();
     </script>
 </body>
 </html>
