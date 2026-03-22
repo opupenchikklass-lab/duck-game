@@ -1,151 +1,24 @@
-[22.03.2026 17:35] ❤️: <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Game</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>TEST</title>
     <style>
-        body { background: #0a0e17; color: #fff; margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; align-items: center; }
-        .header { display: flex; justify-content: space-around; width: 100%; padding: 15px 0; background: rgba(0,0,0,0.5); }
-        .stat-item { background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 20px; border: 1px solid #333; min-width: 80px; text-align: center; }
-        
-        #screen-farm, #screen-merge { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
-        
-        .lvl-box { width: 80%; text-align: center; margin-bottom: 20px; }
-        .bar-bg { background: #222; height: 12px; border-radius: 6px; border: 1px solid #444; overflow: hidden; margin-top: 5px; }
-        #bar-fill { width: 0%; height: 100%; background: orange; transition: width 0.3s; }
-
-        /* ГЛАВНАЯ КНОПКА-УТКА */
-        .duck-wrapper { 
-            width: 280px; height: 280px; 
-            cursor: pointer; 
-            display: flex; align-items: center; justify-content: center;
-            -webkit-tap-highlight-color: transparent;
-        }
-        #duck-img { width: 100%; border-radius: 15px; transition: transform 0.05s; }
-        .duck-wrapper:active #duck-img { transform: scale(0.92); }
-
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 90%; margin-top: 20px; }
-        .slot { aspect-ratio: 1/1; background: #161b22; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; }
-        .open-btn { background: orange; color: #000; font-size: 10px; padding: 3px 6px; border-radius: 4px; margin-top: 5px; font-weight: bold; }
-
-        .footer { display: flex; justify-content: space-around; width: 100%; padding: 20px 0; background: #0f131a; border-top: 1px solid #222; }
-        .nav-item { opacity: 0.5; text-align: center; font-size: 11px; cursor: pointer; }
-        .nav-item.active { opacity: 1; color: orange; font-weight: bold; }
+        body { background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        #clicker { width: 200px; height: 200px; background: blue; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 50px; cursor: pointer; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <div class="stat-item">🌽 <span id="ui-corn">100</span></div>
-        <div class="stat-item">🥚 <span id="ui-eggs">0</span></div>
-    </div>
-
-    <div id="screen-farm">
-        <div class="lvl-box">
-            <b style="color:orange">LEVEL <span id="ui-lvl">1</span></b>
-            <div style="font-size:12px; color:#888"><span id="ui-fed">0</span> / <span id="ui-next">1000</span></div>
-            <div class="bar-bg"><div id="bar-fill"></div></div>
-        </div>
-        
-        <div class="duck-wrapper" id="duck-tap-area">
-            <img id="duck-img" src="duck-dapper.png">
-        </div>
-    </div>
-
-    <div id="screen-merge" style="display:none">
-        <h3 style="color:orange">ИНВЕНТАРЬ</h3>
-        <div class="grid" id="grid"></div>
-    </div>
-
-    <div class="footer">
-        <div class="nav-item active" id="nav-f" onclick="changeTab('farm')">🦆<br>КАЧКИ</div>
-        <div class="nav-item" id="nav-m" onclick="changeTab('merge')">🥚<br>ЯЙЦЯ</div>
-    </div>
+    <div id="clicker">🦆</div>
+    <div id="counter" style="font-size: 30px; margin-top: 20px;">0</div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        let corn = 100;
-        let totalFed = 0;
-        let level = 1;
-        let inventory = [];
-
-        const lvls = [0, 1000, 2500, 4000, 8000, 20000, 30000];
-        const skins = ['🥚', '✨', '💎', '🏺', '👑', '🔥', '🌈', '🌙', '☀️', '💠'];
-        const rew = [5, 15, 40, 100, 250, 600, 1500, 4000, 10000, 25000];
-        const jacks = [250, 750, 1250, 2500, 3000, 5000, 15000, 20000, 30000, 50000];
-[22.03.2026 17:35] ❤️: // ГЛАВНАЯ ФУНКЦИЯ ТАПА
-        document.getElementById('duck-tap-area').onclick = function() {
-            if (corn <= 0) {
-                tg.showAlert("Корм закончился! Открывай яйца.");
-                return;
-            }
-
-            corn--;
-            totalFed++;
-
-            if (totalFed >= lvls[level] && level < 6) {
-                level++;
-                tg.HapticFeedback.notificationOccurred('success');
-            }
-
-            if (inventory.length < 16) {
-                inventory.push(0);
-                if (level === 1 && inventory.length < 16) inventory.push(0);
-            }
-
-            updateUI();
-            tg.HapticFeedback.impactOccurred('light');
+        let count = 0;
+        document.getElementById('clicker').onclick = function() {
+            count++;
+            document.getElementById('counter').innerText = count;
+            console.log("Клик сработал!");
         };
-
-        function changeTab(t) {
-            document.getElementById('screen-farm').style.display = t === 'farm' ? 'flex' : 'none';
-            document.getElementById('screen-merge').style.display = t === 'merge' ? 'flex' : 'none';
-            document.getElementById('nav-f').classList.toggle('active', t === 'farm');
-            document.getElementById('nav-m').classList.toggle('active', t === 'merge');
-            if (t === 'merge') renderGrid();
-        }
-
-        function renderGrid() {
-            const g = document.getElementById('grid');
-            g.innerHTML = '';
-            for (let i = 0; i < 16; i++) {
-                const s = document.createElement('div');
-                s.className = 'slot';
-                if (inventory[i] !== undefined) {
-                    s.innerHTML = <span>${skins[inventory[i]]}</span><div class="open-btn" onclick="openEgg(event, ${i})">OPEN</div>;
-                }
-                g.appendChild(s);
-            }
-        }
-
-        function openEgg(e, i) {
-            e.stopPropagation();
-            let eggLvl = inventory[i];
-            let isJack = Math.random() < 0.05;
-            let win = isJack ? jacks[eggLvl] : rew[eggLvl];
-
-            corn += win;
-            inventory.splice(i, 1);
-            if (isJack) tg.showAlert("🔥 ДЖЕКПОТ! +" + win + " 🌽");
-            updateUI();
-            renderGrid();
-        }
-
-        function updateUI() {
-            document.getElementById('ui-corn').innerText = corn;
-            document.getElementById('ui-eggs').innerText = inventory.length;
-            document.getElementById('ui-lvl').innerText = level;
-            document.getElementById('ui-fed').innerText = totalFed;
-            document.getElementById('ui-next').innerText = lvls[level] || "MAX";
-            let p = (totalFed / lvls[level]) * 100;
-            document.getElementById('bar-fill').style.width = Math.min(p, 100) + "%";
-        }
-
-        updateUI();
     </script>
 </body>
 </html>
