@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Duck Clicker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background: #FFD700; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Arial', sans-serif; overflow: hidden; }
+        #score { font-size: 50px; font-weight: bold; color: white; text-shadow: 2px 2px 5px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        #duck { width: 200px; cursor: pointer; transition: transform 0.1s; user-select: none; }
+        #duck:active { transform: scale(0.9); }
+    </style>
+</head>
+<body>
+    <div id="score">0</div>
+    <img id="duck" src="https://img.icons8.com/emoji/256/duck-emoji.png" alt="Duck">
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Разворачиваем игру на весь экран
+
+        let score = 0;
+        const duck = document.getElementById('duck');
+        const scoreDisplay = document.getElementById('score');
+
+        duck.addEventListener('click', () => {
+            score++;
+            scoreDisplay.innerText = score;
+
+            // Легкая вибрация телефона
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        });
+    </script>
+</body>
+</html>
