@@ -1,138 +1,138 @@
-[22.03.2026 17:50] ❤️: <!DOCTYPE html>
+[22.03.2026 17:54] ❤️: <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Duck Merge</title>
+    <title>Duck Merge Fix</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { background: #0a0e17; color: white; margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         .stats { display: flex; justify-content: space-around; padding: 15px; background: #161b22; border-bottom: 2px solid #333; }
-        #farm, #inv { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
-        /* УТКА */
-        #duck-btn { font-size: 120px; cursor: pointer; transition: transform 0.1s; user-select: none; }
+        #screen-farm, #screen-inv { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+        #duck-btn { font-size: 120px; cursor: pointer; transition: transform 0.1s; user-select: none; -webkit-tap-highlight-color: transparent; }
         #duck-btn:active { transform: scale(0.9); }
-
-        /* СЕТКА ИНВЕНТАРЯ */
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px; width: 90%; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px; width: 90%; box-sizing: border-box; }
         .slot { 
             aspect-ratio: 1/1; background: #1c2128; border: 2px solid #30363d; 
-            border-radius: 10px; display: flex; flex-direction: column; 
+            border-radius: 12px; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; font-size: 24px; position: relative;
         }
-        .slot.selected { border-color: orange; background: rgba(255, 165, 0, 0.1); }
-        .lvl-badge { position: absolute; top: 2px; right: 4px; font-size: 10px; color: #888; }
-        .open-btn { background: orange; border: none; border-radius: 4px; font-size: 9px; font-weight: bold; margin-top: 4px; padding: 2px 4px; }
-
-        .footer { display: flex; background: #0f131a; border-top: 1px solid #333; padding-bottom: 20px; }
-        .nav { flex: 1; padding: 15px; text-align: center; opacity: 0.5; cursor: pointer; }
-        .nav.active { opacity: 1; color: orange; border-top: 2px solid orange; }
+        .slot.selected { border-color: #ffa500; background: rgba(255, 165, 0, 0.1); }
+        .lvl-tag { position: absolute; top: 2px; right: 5px; font-size: 10px; color: #ffa500; font-weight: bold; }
+        .open-btn { background: #ffa500; border: none; border-radius: 4px; font-size: 10px; font-weight: bold; margin-top: 5px; padding: 2px 5px; color: #000; }
+        .footer { display: flex; background: #0f131a; border-top: 1px solid #333; padding-bottom: 25px; }
+        .nav { flex: 1; padding: 15px; text-align: center; opacity: 0.5; font-weight: bold; }
+        .nav.active { opacity: 1; color: #ffa500; border-top: 2px solid #ffa500; }
     </style>
 </head>
 <body>
 
-    <div class="stats">
-        <div>🌽 <span id="corn">100</span></div>
-        <div>🥚 <span id="egg-count">0</span></div>
-    </div>
+<div class="stats">
+    <div>🌽 <span id="corn">100</span></div>
+    <div>🥚 <span id="egg-count">0</span></div>
+</div>
 
-    <div id="farm">
-        <div style="color: orange; margin-bottom: 10px;">LEVEL <span id="lvl">1</span></div>
-        <div id="duck-btn">🦆</div>
-        <p style="color: #888;">Тапай на утку!</p>
-    </div>
+<div id="screen-farm">
+    <div style="color: #ffa500; margin-bottom: 10px; font-weight: bold;">LVL <span id="lvl">1</span></div>
+    <div id="duck-btn">🦆</div>
+    <p id="hint" style="color: #555;">Тапай на утку!</p>
+</div>
 
-    <div id="inv" style="display:none">
-        <h3 style="margin: 10px 0;">ИНВЕНТАРЬ (СОЕДИНЯЙ ОДИНАКОВЫЕ)</h3>
-        <div class="grid" id="grid"></div>
-    </div>
+<div id="screen-inv" style="display:none">
+    <div style="padding: 10px; font-size: 12px; color: #888;">Жми на одинаковые, чтобы соединить!</div>
+    <div class="grid" id="grid"></div>
+</div>
 
-    <div class="footer">
-        <div id="tab-f" class="nav active" onclick="tab('farm')">УТКА</div>
-        <div id="tab-i" class="nav" onclick="tab('inv')">ЯЙЦА</div>
-    </div>
+<div class="footer">
+    <div id="t-f" class="nav active" onclick="showTab('farm')">УТКА</div>
+    <div id="t-i" class="nav" onclick="showTab('inv')">ЯЙЦА</div>
+</div>
 
-    <script>
-        let corn = 100, fed = 0, lvl = 1, inventory = [];
-        let selectedIdx = null;
+<script>
+    const tg = window.Telegram.WebApp;
+    let corn = 100, fed = 0, lvl = 1, inv = [];
+    let sel = null;
 
-        const eggSkins = ['🥚', '✨', '💎', '🏺', '👑', '🔥', '🌈', '🌙', '☀️', '💠'];
-        const jackpots = [250, 750, 1250, 2500, 3000, 5000, 15000, 20000, 30000, 50000];
-        const rewards = [5, 15, 40, 100, 250, 600, 1500, 4000, 10000, 25000];
+    const skins = ['🥚', '✨', '💎', '🏺', '👑', '🔥', '🌈', '🌙', '☀️', '💠'];
+    const rewards = [5, 15, 40, 100, 250, 600, 1500, 4000, 10000, 25000];
+    const jacks = [250, 750, 1250, 2500, 3000, 5000, 15000, 20000, 30000, 50000];
 
-        // КЛИК ПО УТКЕ
-        document.getElementById('duck-btn').onclick = () => {
-            if (corn <= 0) return alert("Кончилась кукуруза!");
-            corn--; fed++;
-            if (fed >= (lvl * 1000)) { lvl++; alert("LEVEL UP!"); }
-            if (inventory.length < 16) inventory.push(0);
-            updateUI();
-        };
-
-        function tab(t) {
-            document.getElementById('farm').style.display = t === 'farm' ? 'flex' : 'none';
-            document.getElementById('inv').style.display = t === 'inv' ? 'flex' : 'none';
-            document.getElementById('tab-f').className = 'nav' + (t==='farm'?' active':'');
-            document.getElementById('tab-i').className = 'nav' + (t==='inv'?' active':'');
-            if (t === 'inv') renderGrid();
+    // Клик по утке
+    document.getElementById('duck-btn').onclick = () => {
+        if (corn <= 0) { tg.showAlert("Корм кончился!"); return; }
+        corn--; fed++;
+        if (fed >= (lvl * 1000)) { lvl++; tg.showAlert("Новый уровень: " + lvl); }
+        if (inv.length < 16) {
+            inv.push(0);
+            if (lvl === 1 && inv.length < 16) inv.push(0);
         }
+        update();
+        tg.HapticFeedback.impactOccurred('light');
+    };
 
-        function renderGrid() {
-            const container = document.getElementById('grid');
-            container.innerHTML = '';
-[22.03.2026 17:50] ❤️: for (let i = 0; i < 16; i++) {
-                const slot = document.createElement('div');
-                slot.className = 'slot' + (selectedIdx === i ? ' selected' : '');
-                
-                if (inventory[i] !== undefined) {
-                    const eggLvl = inventory[i];
-                    slot.innerHTML = <span class="lvl-badge">L${eggLvl+1}</span>
-                                      <span>${eggSkins[eggLvl]}</span>
-                                      <button class="open-btn" onclick="openEgg(event, ${i})">OPEN</button>;
-                    slot.onclick = () => selectSlot(i);
-                }
-                container.appendChild(slot);
-            }
-        }
-
-        function selectSlot(i) {
-            if (selectedIdx === null) {
-                selectedIdx = i;
-            } else if (selectedIdx === i) {
-                selectedIdx = null;
-            } else {
-                // ПРОВЕРКА НА СЛИЯНИЕ
-                if (inventory[selectedIdx] === inventory[i] && inventory[i] < 9) {
-                    inventory[i]++; // Повышаем уровень
-                    inventory.splice(selectedIdx, 1); // Удаляем старое
-                    selectedIdx = null;
-                } else {
-                    selectedIdx = i;
-                }
-            }
-            renderGrid();
-        }
-
-        function openEgg(e, i) {
-            e.stopPropagation();
-            let eggLvl = inventory[i];
-            let isJackpot = Math.random() < 0.05;
-            let win = isJackpot ? jackpots[eggLvl] : rewards[eggLvl];
+    function showTab(t) {
+        document.getElementById('screen-farm').style.display = t === 'farm' ? 'flex' : 'none';
+        document.getElementById('screen-inv').style.display = t === 'inv' ? 'flex' : 'none';
+        document.getElementById('t-f').classList.toggle('active', t === 'farm');
+        document.getElementById('t-i').classList.toggle('active', t === 'inv');
+        if (t === 'inv') render();
+    }
+[22.03.2026 17:54] ❤️: function render() {
+        const container = document.getElementById('grid');
+        container.innerHTML = '';
+        for (let i = 0; i < 16; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'slot' + (sel === i ? ' selected' : '');
             
-            corn += win;
-            if (isJackpot) alert("🔥 ДЖЕКПОТ! +" + win + " 🌽");
-            inventory.splice(i, 1);
-            selectedIdx = null;
-            updateUI();
-            renderGrid();
+            if (inv[i] !== undefined) {
+                slot.innerHTML = <span class="lvl-tag">${inv[i]+1}</span>
+                                  <span>${skins[inv[i]]}</span>
+                                  <button class="open-btn" onclick="openEgg(event, ${i})">OPEN</button>;
+                slot.onclick = () => select(i);
+            }
+            container.appendChild(slot);
         }
+    }
 
-        function updateUI() {
-            document.getElementById('corn').innerText = corn;
-            document.getElementById('egg-count').innerText = inventory.length;
-            document.getElementById('lvl').innerText = lvl;
-            document.getElementById('fed').innerText = fed;
+    function select(i) {
+        if (sel === null) {
+            sel = i;
+        } else if (sel === i) {
+            sel = null;
+        } else {
+            // ЛОГИКА СЛИЯНИЯ
+            if (inv[sel] === inv[i] && inv[i] < 9) {
+                inv[i]++; // Повышаем уровень того, на который нажали вторым
+                inv.splice(sel, 1); // Удаляем первый
+                sel = null;
+                tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                sel = i; // Просто переключаем выбор
+            }
         }
-    </script>
+        render();
+    }
+
+    function openEgg(e, i) {
+        e.stopPropagation();
+        let isJack = Math.random() < 0.05;
+        let win = isJack ? jacks[inv[i]] : rewards[inv[i]];
+        corn += win;
+        if (isJack) tg.showAlert("🔥 ДЖЕКПОТ! +" + win + " 🌽");
+        inv.splice(i, 1);
+        sel = null;
+        update();
+        render();
+    }
+
+    function update() {
+        document.getElementById('corn').innerText = corn;
+        document.getElementById('egg-count').innerText = inv.length;
+        document.getElementById('lvl').innerText = lvl;
+        document.getElementById('fed').innerText = fed;
+    }
+    
+    update();
+</script>
 </body>
 </html>
