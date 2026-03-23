@@ -1,78 +1,281 @@
-<!DOCTYPE html>
-<html>
+[23.03.2026 17:42] Роман: <!DOCTYPE html>
+<html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { background: #0e0e0e; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .btn { background: #f1c40f; color: black; padding: 20px; width: 100%; border-radius: 15px; font-weight: bold; border: none; font-size: 18px; margin-top: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 20px; }
-        .slot { aspect-ratio: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .bar-bg { width: 100%; height: 10px; background: #000; border-radius: 5px; margin: 10px 0; overflow: hidden; }
-        .bar-fill { height: 100%; background: #f1c40f; width: 0%; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Duck Game</title>
+  <style>
+    body {
+      background: linear-gradient(#f9e79f, #f5cba7);
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    #game {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #cornCounter, #tokenCounter {
+      position: absolute;
+      right: 20px;
+      border-radius: 25px;
+      padding: 10px 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #cornCounter {
+      top: 20px;
+      background: #fff3cd;
+      border: 2px solid #f39c12;
+    }
+    #tokenCounter {
+      top: 80px;
+      background: #d4efdf;
+      border: 2px solid #27ae60;
+    }
+    #duck {
+      width: 200px;
+      height: 200px;
+      margin-top: 100px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    #duck:active {
+      transform: scale(0.9);
+    }
+    #eggPanel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: #fef9e7;
+      border: 2px solid #f7dc6f;
+      border-radius: 15px;
+      padding: 10px;
+      width: 280px;
+      text-align: left;
+    }
+    .egg {
+      display: inline-block;
+      width: 40px;
+      height: 50px;
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 50% 50% 45% 45%;
+      margin: 5px;
+      cursor: pointer;
+      text-align: center;
+      line-height: 50px;
+      font-weight: bold;
+      position: relative;
+    }
+    .flash {
+      animation: flashAnim 0.6s ease-out;
+    }
+    @keyframes flashAnim {
+      0% { background: yellow; transform: scale(1.2); }
+      100% { background: #fff; transform: scale(1); }
+    }
+    .floatingText {
+      position: absolute;
+      color: green;
+      font-weight: bold;
+      animation: floatUp 1s ease-out forwards;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; bottom: 0; }
+      100% { opacity: 0; bottom: 40px; }
+    }
+    .explosion {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,200,0,1) 0%, rgba(255,0,0,0.7) 70%, transparent 100%);
+      animation: explode 0.8s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes explode {
+      0% { transform: scale(0.2); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+  </style>
 </head>
 <body>
-
-    <h2>156.50</h2>
-    <p>🌽 КОРМ: <span id="c">1000</span></p>
-
-    <div style="background: #151515; padding: 15px; border-radius: 20px;">
-        <div class="bar-bg"><div id="f" class="bar-fill"></div></div>
-        <div style="font-size: 10px;"><span id="x">0</span> / 1000 ДО РОСТУ</div>
-        <button class="btn" onclick="tap()">ГОДУВАТИ 1</button>
+  <div id="game">
+    <div id="cornCounter">🌽 Корм: <span id="corn">200</span></div>
+    <div id="tokenCounter">🪙 Токени: <span id="tokens">0</span></div>
+    <img id="duck" src="https://upload.wikimedia.org/wikipedia/commons/7/72/Rubber_duck.svg" alt="Duck">
+    <div id="eggPanel">
+      <h3>🥚 Яйця:</h3>
+      <div id="eggs"></div>
     </div>
+  </div>
 
-    <div class="grid" id="g"></div>
+  <script>
+    let corn = 200;
+    let tokens = 0;
+    let tapCost = 2;
+    let rarity = "rare"; // "common", "rare", "epic", "legendary"
 
-    <script>
-        // Принудительная инициализация
-        window.onload = () => {
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.ready();
-                window.Telegram.WebApp.expand();
-            }
-        };
+    const cornEl = document.getElementById("corn");
+    const tokenEl = document.getElementById("tokens");
+    const duckEl = document.getElementById("duck");
+    const eggsEl = document.getElementById("eggs");
 
-        let state = { corn: 1000, xp: 0, taps: 0, slots: Array(16).fill(null) };
+    const eggRewards = {
+      1: {corn:25},
+      2: {corn:75, jackpot:500, chance:0.05},
+      3: {corn:100, jackpot:1000, chance:0.05},
+      4: {corn:175, jackpot:2000, chance:0.05},
+      5: {corn:250, jackpot:4000, chance:0.05, rareDuck:0.05},
+      6: {corn:325, jackpot:6000, chance:0.05, rareDuck:0.05},
+      7: {corn:450, jackpot:7000, chance:0.05, rareDuck:0.05, epicDuck:0.02},
+      8: {corn:800, jackpot:10000, chance:0.05, epicDuck:0.02},
+      9: {corn:1200, jackpot:15000, chance:0.05, epicDuck:0.058, legendaryDuck:0.005},
+      10:{corn:1750, jackpot:20000, chance:0.05, epicDuck:0.058, legendaryDuck:0.005},
+      11:{corn:2700, jackpot:30000, chance:0.05, epicDuck:0.058, legendaryDuck:0.005},
+      12:{corn:6700, jackpot:60000, chance:0.05, epicDuck:0.058, legendaryDuck:0.005}
+    };
+[23.03.2026 17:42] Роман: duckEl.addEventListener("click", () => {
+      if (corn >= tapCost) {
+        corn -= tapCost;
+        cornEl.textContent = corn;
+        tapCost += 2;
 
-        function tap() {
-            state.corn--;
-            state.xp++;
-            state.taps++;
+        const egg = document.createElement("div");
+        egg.className = "egg";
+        egg.dataset.level = 1;
+        egg.textContent = "1";
+        egg.title = "Яйце lvl 1";
+        egg.addEventListener("click", () => openEgg(egg));
+        egg.addEventListener("dblclick", () => mergeEgg(egg));
+        eggsEl.appendChild(egg);
 
-            // Механика: 2 тапа = 1 яйцо
-            if (state.taps % 2 === 0) {
-                let empty = state.slots.indexOf(null);
-                if (empty !== -1) state.slots[empty] = '🥚';
-            }
+        if (rarity === "rare") tokens += 0.1;
+        if (rarity === "epic") tokens += 0.25;
+        if (rarity === "legendary") tokens += 0.5;
+        tokenEl.textContent = tokens.toFixed(2);
+      } else {
+        alert("Не вистачає корму!");
+      }
+    });
 
-            // Обновляем текст
-            document.getElementById('c').innerText = state.corn;
-            document.getElementById('x').innerText = state.xp;
-            
-            // Обновляем шкалу (1/1000)
-            document.getElementById('f').style.width = (state.xp / 10) + '%';
+    function openEgg(egg) {
+      let lvl = parseInt(egg.dataset.level);
+      let reward = eggRewards[lvl];
+      if (!reward) return;
 
-            // Обновляем сетку 4x4
-            const grid = document.getElementById('g');
-            grid.innerHTML = '';
-            state.slots.forEach(s => {
-                let d = document.createElement('div');
-                d.className = 'slot';
-                d.innerText = s || '';
-                grid.appendChild(d);
-            });
+      let gainedCorn = reward.corn;
+      if (reward.jackpot && Math.random() < reward.chance) {
+        gainedCorn = reward.jackpot;
+        alert("🎉 Джекпот!");
+      }
+      corn += gainedCorn;
+      cornEl.textContent = corn;
 
-            // Вибрация
-            if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-            }
-        }
+      let floatText = document.createElement("div");
+      floatText.className = "floatingText";
+      floatText.textContent = "+" + gainedCorn;
+      egg.appendChild(floatText);
+      setTimeout(() => egg.removeChild(floatText), 1000);
 
-        // Рисуем пустую сетку при старте
-        tap(); state.corn++; state.xp--; state.taps--; 
-    </script>
-</body>
-</html>
+      if (reward.rareDuck && Math.random() < reward.rareDuck) spawnDuckExplosion(egg,"Рідкісна утка!");
+      if (reward.epicDuck && Math.random() < reward.epicDuck) spawnDuckExplosion(egg,"Епічна утка!");
+      if (reward.legendaryDuck && Math.random() < reward.legendaryDuck) spawnDuckExplosion(egg,"Легендарна утка!");
+
+      eggsEl.removeChild(egg);
+    }
+
+    function mergeEgg(egg) {
+      let lvl = parseInt(egg.dataset.level);
+      let sameEgg = Array.from(eggsEl.children).find(e => e !== egg && parseInt(e.dataset.level) === lvl);
+      if (sameEgg) {
+        eggsEl.removeChild(egg);
+        eggsEl.removeChild(sameEgg);
+        const newEgg = document.createElement("div");
+        newEgg.className = "egg flash";
+        newEgg.dataset.level = lvl+1;
+        newEgg.textContent = (lvl+1);
+        newEgg.title = "Яйце lvl " + (lvl+1);
+        newEgg.addEventListener("click", () => openEgg(newEgg));
+        newEgg.addEventListener("dblclick", () => mergeEgg(newEgg));
+        eggsEl.appendChild(newEgg);
+      }
+    }
+
+    function spawnDuckExplosion(egg,message){
+      alert(message);
+      const explosion = document.createElement("divх
+    duckEl.addEventListener("click", () => {
+      if (corn >= tapCost) {
+        corn -= tapCost;
+        cornEl.textContent = corn;
+        tapCost += 2;
+
+        const egg = document.createElement("div");
+        egg.className = "egg";
+        egg.dataset.level = 1;
+        egg.textContent = "1";
+        egg.title = "Яйце lvl 1";
+        egg.addEventListener("click", () => openEgg(egg));
+        egg.addEventListener("dblclick", () => mergeEgg(egg));
+        eggsEl.appendChild(egg);
+
+        if (rarity === "rare") tokens += 0.1;
+        if (rarity === "epic") tokens += 0.25;
+        if (rarity === "legendary") tokens += 0.5;
+        tokenEl.textContent = tokens.toFixed(2);
+      } else {
+        alert("Не вистачає корму!");
+      }
+    });
+
+    function openEgg(egg) {
+      let lvl = parseInt(egg.dataset.level);
+      let reward = eggRewards[lvl];
+      if (!reward) return;
+
+      let gainedCorn = reward.corn;
+      if (reward.jackpot && Math.random() < reward.chance) {
+        gainedCorn = reward.jackpot;
+        alert("🎉 Джекпот!");
+      }
+      corn += gainedCorn;
+      cornEl.textContent = corn;
+
+      let floatText = document.createElement("div");
+      floatText.className = "floatingText";
+      floatText.textContent = "+" + gainedCorn;
+      egg.appendChild(floatText);
+      setTimeout(() => egg.removeChild(floatText), 1000);
+
+      if (reward.rareDuck && Math.random() < reward.rareDuck) spawnDuckExplosion(egg,"Рідкісна утка!");
+      if (reward.epicDuck && Math.random() < reward.epicDuck) spawnDuckExplosion(egg,"Епічна утка!");
+      if (reward.legendaryDuck && Math.random() < reward.legendaryDuck) spawnDuckExplosion(egg,"Легендарна утка!");
+
+      eggsEl.removeChild(egg);
+    }
+
+    function mergeEgg(egg) {
+      let lvl = parseInt(egg.dataset.level);
+      let sameEgg = Array.from(eggsEl.children).find(e => e !== egg && parseInt(e.dataset.level) === lvl);
+      if (sameEgg) {
+        eggsEl.removeChild(egg);
+        eggsEl.removeChild(sameEgg);
+        const newEgg = document.createElement("div");
+        newEgg.className = "egg flash";
+        newEgg.dataset.level = lvl+1;
+        newEgg.textContent = (lvl+1);
+        newEgg.title = "Яйце lvl " + (lvl+1);
+        newEgg.addEventListener("click", () => openEgg(newEgg));
+        newEgg.addEventListener("dblclick", () => mergeEgg(newEgg));
+        eggsEl.appendChild(newEgg);
+      }
+    }
+
+    function spawnDuckExplosion(egg,message){
+      alert(message);
+      const explosion = document.createElement("div
+    
