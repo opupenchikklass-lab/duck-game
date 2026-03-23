@@ -1,4 +1,4 @@
-[23.03.2026 17:42] Роман: <!DOCTYPE html>
+[23.03.2026 17:44] Роман: <!DOCTYPE html>
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
@@ -138,7 +138,7 @@
       11:{corn:2700, jackpot:30000, chance:0.05, epicDuck:0.058, legendaryDuck:0.005},
       12:{corn:6700, jackpot:60000, chance:0.05, epicDuck:0.058, legendaryDuck:0.005}
     };
-[23.03.2026 17:42] Роман: duckEl.addEventListener("click", () => {
+[23.03.2026 17:44] Роман: duckEl.addEventListener("click", () => {
       if (corn >= tapCost) {
         corn -= tapCost;
         cornEl.textContent = corn;
@@ -207,75 +207,5 @@
 
     function spawnDuckExplosion(egg,message){
       alert(message);
-      const explosion = document.createElement("divх
-    duckEl.addEventListener("click", () => {
-      if (corn >= tapCost) {
-        corn -= tapCost;
-        cornEl.textContent = corn;
-        tapCost += 2;
-
-        const egg = document.createElement("div");
-        egg.className = "egg";
-        egg.dataset.level = 1;
-        egg.textContent = "1";
-        egg.title = "Яйце lvl 1";
-        egg.addEventListener("click", () => openEgg(egg));
-        egg.addEventListener("dblclick", () => mergeEgg(egg));
-        eggsEl.appendChild(egg);
-
-        if (rarity === "rare") tokens += 0.1;
-        if (rarity === "epic") tokens += 0.25;
-        if (rarity === "legendary") tokens += 0.5;
-        tokenEl.textContent = tokens.toFixed(2);
-      } else {
-        alert("Не вистачає корму!");
-      }
-    });
-
-    function openEgg(egg) {
-      let lvl = parseInt(egg.dataset.level);
-      let reward = eggRewards[lvl];
-      if (!reward) return;
-
-      let gainedCorn = reward.corn;
-      if (reward.jackpot && Math.random() < reward.chance) {
-        gainedCorn = reward.jackpot;
-        alert("🎉 Джекпот!");
-      }
-      corn += gainedCorn;
-      cornEl.textContent = corn;
-
-      let floatText = document.createElement("div");
-      floatText.className = "floatingText";
-      floatText.textContent = "+" + gainedCorn;
-      egg.appendChild(floatText);
-      setTimeout(() => egg.removeChild(floatText), 1000);
-
-      if (reward.rareDuck && Math.random() < reward.rareDuck) spawnDuckExplosion(egg,"Рідкісна утка!");
-      if (reward.epicDuck && Math.random() < reward.epicDuck) spawnDuckExplosion(egg,"Епічна утка!");
-      if (reward.legendaryDuck && Math.random() < reward.legendaryDuck) spawnDuckExplosion(egg,"Легендарна утка!");
-
-      eggsEl.removeChild(egg);
-    }
-
-    function mergeEgg(egg) {
-      let lvl = parseInt(egg.dataset.level);
-      let sameEgg = Array.from(eggsEl.children).find(e => e !== egg && parseInt(e.dataset.level) === lvl);
-      if (sameEgg) {
-        eggsEl.removeChild(egg);
-        eggsEl.removeChild(sameEgg);
-        const newEgg = document.createElement("div");
-        newEgg.className = "egg flash";
-        newEgg.dataset.level = lvl+1;
-        newEgg.textContent = (lvl+1);
-        newEgg.title = "Яйце lvl " + (lvl+1);
-        newEgg.addEventListener("click", () => openEgg(newEgg));
-        newEgg.addEventListener("dblclick", () => mergeEgg(newEgg));
-        eggsEl.appendChild(newEgg);
-      }
-    }
-
-    function spawnDuckExplosion(egg,message){
-      alert(message);
-      const explosion = document.createElement("div
-    
+      const explosion = document.createElement("div");
+      explosion.className = "
